@@ -1,0 +1,32 @@
+# Reglas Base - Simulador Asistente Propyme (Frontend)
+
+## 1. Arquitectura y Filosofía (Dumb UI / Smart Backend)
+
+- **Separación estricta:** El frontend es una interfaz "tonta" (Dumb UI). Su única responsabilidad es renderizar datos, capturar inputs del usuario (estado `digitados`), y aplicar reglas visuales (bloqueos, ocultamientos, tooltips).
+- **Cero Matemáticas:** NUNCA debes programar fórmulas tributarias, cálculos algebraicos, sumatorias complejas o lógica de negocio en JavaScript/TypeScript. Todo el cálculo lo hace el backend (Python/FastAPI).
+- **Manejo de Estado:** Los inputs del usuario no recalculan la tabla automáticamente. Se guardan en un estado local "sucio" (dirty state) hasta que el usuario presione explícitamente "Recalcular Caso", momento en que se envía el POST al backend.
+- **Comentarios:** Deben dejarse comentarios relevantes y utiles en español (quitando caracteres especiales como "ñ" o tildes, por ejemplo la "año" debe ser "ano"). No hagas comentarios en primera persona como "Hicimos este cambio para..." sino en forma impersonal, como "Se hizo este cambio para...".
+
+## 2. UI, Diseño y Tailwind CSS
+
+- **Paleta de Colores Estricta:**
+  - Fondo general: `#eef2f6` (Gris Pizarra Frío).
+  - Tinta principal: `slate-900` y `slate-950`.
+  - Acentos interactivos y botones primarios: `indigo-600` / `indigo-700`.
+  - Highlights técnicos (badges, motor, alertas): `cyan-400` / `cyan-300`.
+  - Estados: `emerald-500` (OK/Sincronizado), `amber-500` (Alerta/Pendiente).
+- **Tipografía:**
+  - Interfaz general: `font-sans` (Inter).
+  - Datos numéricos, monetarios, códigos SII (F29/F22) y fórmulas: Obligatorio usar `font-mono` (JetBrains Mono) con alineación tabular para alinear cifras correctamente.
+- **Componentes Complejos:** Utiliza el patrón Slide-Over Drawer para inspectores de detalles (Caja de Cristal). No uses modales centrados ni ensucies la tabla con filas expandibles a menos que se indique explícitamente.
+
+## 3. Calidad de Código
+
+- Usa TypeScript estricto. Define interfaces para los payloads de la API y las respuestas (ej. `SimulationRequest`, `SimulationResponse`).
+- Mantén el código limpio, funcional y con early returns.
+- Nombra las variables y funciones de manera descriptiva. Usa nomenclatura en inglés para código estructural y español para conceptos de negocio tributario (ej. `montoNoPercibido`, `handleRecalcularCaso`).
+
+## 4. Memoria de Proyecto y Estado
+
+- Consulta siempre `docs/TASK_PROGRESS.md` al inicio de cada tarea para saber el estado exacto del proyecto.
+- Cada vez que completes un hito, función o componente, actualiza los checkboxes `[x]` y si es necesario agregar o modificar el estado actual y la descripción, lo haces, incluyendo agregar el resumen de ese archivo antes de finalizar el turno.
