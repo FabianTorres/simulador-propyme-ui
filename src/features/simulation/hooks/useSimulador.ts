@@ -132,10 +132,12 @@ const handleRecalcularCaso = async () => {
     try {
       // Se construye el payload a partir de los estados actuales (no de
       // crearRequestInicial) para preservar vectores y externos importados.
+      // Se solicita explicitamente la trazabilidad del motor de auditoria.
       const payload: SimulacionGlobalRequest = {
         at: '2025',
         modulo: 'ingresos_14d1',
         patrimonio_personal: false,
+        mostrar_formulas: true,
         vectores: vectores,
         externos: {
           ...externos,
@@ -228,6 +230,7 @@ const handleRecalcularCaso = async () => {
         at: '2025',
         modulo: 'ingresos_14d1',
         patrimonio_personal: false,
+        mostrar_formulas: true,
         vectores: vectoresParseados,
         externos: { ...calculadoraParseada, '14D1': atributo14D1 ? 1 : 0, CRRP: atributoCRRP ? 1 : 0 },
         digitados: { ingresos: digitadosVacios },

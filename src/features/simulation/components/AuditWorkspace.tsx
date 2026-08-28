@@ -11,7 +11,7 @@ import { IncomeTable } from './IncomeTable';
 import { GlobalControlBar } from './GlobalControlBar';
 import { useSimulador } from '../hooks/useSimulador';
 import { FILA_META } from '../data/incomeCatalog';
-import type { DigitadosIngresos, FilaIngreso, SimulacionGlobalResponse } from '../types/ingresos';
+import type { BackendInspector, DigitadosIngresos, FilaIngreso, SimulacionGlobalResponse } from '../types/ingresos';
 import type { FieldTraceability, IntermediateFactor } from '../types/inspector';
 import { parseNumero } from '../../../utils/parsers';
 interface SiiPageTab {
@@ -31,8 +31,10 @@ const siiPages: SiiPageTab[] = [
   { id: 8, name: 'Página 8: Resumen y Envío de DJ', shortName: '8. Resumen y Envío', badge: 'Cierre' },
 ];
 /* Trazabilidad para la Caja de Cristal (metadata QA, no logica tributaria) */
-type SeccionCategoria = 'resultado' | 'neto' | 'noPercibido' | 'patrimonio' | 'rentaPresunta';
+type SeccionCategoria = 'resultado' | 'neto' | 'noPercibido' | 'patrimonio' | 'rentaPresunta' | 'adeudados';
+
 const categoriaSeccion = (key: string): SeccionCategoria => {
+  if (key.startsWith('adeudados_')) return 'adeudados';
   if (key.startsWith('noPerc_')) return 'noPercibido';
   if (key.startsWith('patrimonio_')) return 'patrimonio';
   if (key.startsWith('presunta_')) return 'rentaPresunta';
@@ -53,6 +55,59 @@ const factorIngresos = (
     { name: 'Renta Presunta', source: 'Col. E (digitado)', value: digitados.factura_renta_presunta[codigo] ?? 0 },
   ];
 };
+const etiquetaPorSeccion: Record<SeccionCategoria, string> = {
+  resultado: 'Monto Ingreso Percibido',
+  neto: 'Ingresos del Año (Neto) — Propuesta del motor',
+  noPercibido: 'Monto No Percibido del Año (Neto)',
+  patrimonio: 'No Considerar: es de Patrimonio Personal',
+  rentaPresunta: 'Facturas de Actividad de Renta Presunta',
+  adeudados: 'Ingresos percibidos de montos adeudados de AT anterior',
+};
+
+/**
+ * Mapea la trazabilidad real devuelta por el motor de auditoria del backend
+ * a la interfaz FieldTraceability. Tiene prioridad sobre la metadata estatica
+ * local (FILA_META).
+ *
+ * La llave del inspector se obtiene a partir del prefix del campo (neto_,
+ * adeudados_, percibido_) para apuntar al diccionario inspectores de la fila.
+ */
+const trazabilidadDesdeBackend = (
+  key: string,
+  fila: FilaIngreso,
+  seccion: SeccionCategoria
+): FieldTraceability => {
+  const llaveInspector = key.startsWith('neto_')
+    ? 'ingresos_ano'
+    : key.startsWith('adeudados_')
+      ? 'ingresos_adeudados_at_anterior'
+      : key.startsWith('percibido_')
+        ? 'monto_ingreso_percibido'
+        : 'monto_ingreso_percibido';
+  const inspector = fila.inspectores?.[llaveInspector] as BackendInspector;
+  const meta = FILA_META[fila.codigo];
+  return {
+    fieldId: key,
+    casillaCode:
+      meta?.codigoF22 != null
+        ? `F22 [C${meta.codigoF22}] · Fila ${fila.codigo}`
+        : `Fila ${fila.codigo}`,
+    label: `${etiquetaPorSeccion[seccion]} — ${fila.concepto.slice(0, 46)}${fila.concepto.length > 46 ? '…' : ''}`,
+    calculatedValue: parseNumero(inspector.valor),
+    formula: inspector.literal,
+    evaluatedExpression: inspector.evaluado,
+    calculationSteps: inspector.pasos,
+    isManualInput: inspector.literal.includes('dig_'),
+    factors: inspector.variables_usadas.map((variable) => ({
+      name: variable.nombre,
+      source: variable.origen,
+      value: parseNumero(variable.valor),
+    })),
+    legalReference: meta?.referenciaLegal ?? 'docs/Pagina_1_14D1.md',
+    status: 'ok',
+  };
+};
+
 function construirTrazabilidad(
   key: string,
   response: SimulacionGlobalResponse,
@@ -73,9 +128,9 @@ function construirTrazabilidad(
       formula: es12
         ? 'POS(7.1 + 7.2 + 7.3 + 7.4 + 7.5 + 7.6 + 7.7 − 7.8 + 7.9 + 7.11)'
         : '7.12 + 7.13 + 7.14 + 7.15 + 7.16 + 7.17 + 7.18 + 7.19 + 7.20 + 7.25 + 7.26 + 7.27 + 7.10',
-      explanation: es12
-        ? 'Subtotal de las ventas y servicios del giro antes de las deducciones de la Línea 2 (F22).'
-        : 'Total consolidado de ingresos percibidos que alimenta la Línea 1 del Formulario 22 (C1410).',
+      evaluatedExpression: es12 ? totales.fila_7_12 : totales.fila_7_total,
+      calculationSteps: [],
+      isManualInput: false,
       factors: filas
         .filter((f) =>
           es12 ? f.codigo !== '7' : f.codigo !== '7' && f.codigo !== '7.12'
@@ -91,6 +146,7 @@ function construirTrazabilidad(
   }
   const codigo = parteCodigo(key);
   const fila = filas.find((f) => f.codigo === codigo);
+  const seccion = categoriaSeccion(key);
   if (!fila) {
     return {
       fieldId: key,
@@ -98,14 +154,28 @@ function construirTrazabilidad(
       label: 'Campo de Página 1 — Ingresos',
       calculatedValue: 0,
       formula: '—',
-      explanation: 'La partida no posee valores propuestos en el caso.',
+      evaluatedExpression: undefined,
+      calculationSteps: [],
+      isManualInput: false,
       factors: [],
       legalReference: 'docs/Pagina_1_14D1.md',
       status: 'ok',
     };
   }
   const meta = FILA_META[codigo];
-  const seccion = categoriaSeccion(key);
+  // Si el motor de auditoria devolvio trazabilidad especifica para la celda,
+  // se prioriza sobre la metadata local.
+  const llaveInspector = key.startsWith('neto_')
+    ? 'ingresos_ano'
+    : key.startsWith('adeudados_')
+      ? 'ingresos_adeudados_at_anterior'
+      : key.startsWith('percibido_')
+        ? 'monto_ingreso_percibido'
+        : undefined;
+  const celdaInspector = llaveInspector != null ? fila.inspectores?.[llaveInspector] : undefined;
+  if (celdaInspector) {
+    return trazabilidadDesdeBackend(key, fila, seccion);
+  }
   const valorCampo =
     seccion === 'neto'
       ? parseNumero(fila.ingresos_ano)
@@ -116,20 +186,15 @@ function construirTrazabilidad(
           : seccion === 'rentaPresunta'
             ? (digitados.factura_renta_presunta[codigo] ?? 0)
             : parseNumero(fila.monto_ingreso_percibido);
-  const etiquetaPorSeccion: Record<SeccionCategoria, string> = {
-    resultado: 'Monto Ingreso Percibido',
-    neto: 'Ingresos del Año (Neto) — Propuesta del motor',
-    noPercibido: 'Monto No Percibido del Año (Neto)',
-    patrimonio: 'No Considerar: es de Patrimonio Personal',
-    rentaPresunta: 'Facturas de Actividad de Renta Presunta',
-  };
   return {
     fieldId: key,
     casillaCode: meta.codigoF22 !== null ? `F22 [C${meta.codigoF22}] · Fila ${codigo}` : `Fila ${codigo}`,
     label: `${etiquetaPorSeccion[seccion]} — ${fila.concepto.slice(0, 46)}${fila.concepto.length > 46 ? '…' : ''}`,
     calculatedValue: valorCampo,
     formula: meta.formula,
-    explanation: meta.explicacion,
+    evaluatedExpression: undefined,
+    calculationSteps: [],
+    isManualInput: true,
     factors: factorIngresos(fila, digitados),
     legalReference: meta.referenciaLegal,
     status: 'ok',

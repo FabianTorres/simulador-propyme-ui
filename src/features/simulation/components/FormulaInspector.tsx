@@ -7,6 +7,14 @@ interface FormulaInspectorProps {
   onClose: () => void;
 }
 
+const ORIGEN_STYLES: Record<string, string> = {
+  vector: 'text-indigo-700 bg-indigo-50 border-indigo-200',
+  digitado: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+  externo: 'text-amber-700 bg-amber-50 border-amber-200',
+  calculado: 'text-cyan-700 bg-cyan-50 border-cyan-200',
+  default: 'text-slate-700 bg-slate-50 border-slate-200',
+};
+
 export const FormulaInspector = ({ trace, isOpen, onClose }: FormulaInspectorProps) => {
   if (!isOpen || !trace) return null;
 
@@ -26,7 +34,7 @@ export const FormulaInspector = ({ trace, isOpen, onClose }: FormulaInspectorPro
             <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
               {trace.casillaCode}
             </span>
-            <span className="text-xs font-medium text-slate-300">Auditoría de Casilla</span>
+            <span className="text-xs font-medium text-slate-300">Auditoria de Casilla</span>
           </div>
 
           <button
@@ -50,19 +58,50 @@ export const FormulaInspector = ({ trace, isOpen, onClose }: FormulaInspectorPro
             </div>
           </div>
 
-          {/* Consola de la Fórmula */}
-          <div className="bg-slate-950 rounded-xl p-4 text-slate-200 space-y-2 border border-slate-800 shadow-inner">
-            <div className="flex items-center justify-between text-[10px] uppercase font-bold text-cyan-400 tracking-wider">
-              <span>Fórmula Matemática</span>
-              <span className="text-slate-500 font-mono">RULE_ENGINE</span>
+          {/* Bloque de Formula / Entrada Manual */}
+          {trace.isManualInput ? (
+            <div className="bg-slate-50 rounded-xl p-4 border border-dashed border-slate-300 space-y-2">
+              <div className="flex items-center gap-2 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                <span>Valor de Entrada</span>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Este valor no posee calculo automatico. Corresponde a una variable de entrada o a un valor ingresado manualmente.
+              </p>
             </div>
-            <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800 font-mono text-xs text-indigo-200 leading-relaxed overflow-x-auto">
-              {trace.formula}
+          ) : (
+            <div className="bg-slate-950 rounded-xl p-4 text-slate-200 space-y-3 border border-slate-800 shadow-inner">
+              <div className="flex items-center justify-between text-[10px] uppercase font-bold text-cyan-400 tracking-wider">
+                <span>Formula Matematica</span>
+                <span className="text-slate-500 font-mono">RULE_ENGINE</span>
+              </div>
+              <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800 font-mono text-xs text-indigo-200 leading-relaxed overflow-x-auto whitespace-pre-wrap">
+                {trace.formula}
+              </div>
+              {trace.evaluatedExpression && (
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
+                    Reemplazo Numerico
+                  </span>
+                  <div className="font-mono text-sm text-white leading-relaxed whitespace-pre-wrap">
+                    {trace.evaluatedExpression}
+                  </div>
+                </div>
+              )}
+              {trace.calculationSteps && trace.calculationSteps.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
+                    Desglose
+                  </span>
+                  {trace.calculationSteps.map((paso, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs text-slate-400 font-mono leading-relaxed">
+                      <span className="text-slate-600 mt-0.5">↳</span>
+                      <span className="whitespace-pre-wrap">{paso}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <p className="text-[11px] text-slate-400 leading-normal pt-1">
-              {trace.explanation}
-            </p>
-          </div>
+          )}
 
           {/* Variables y Factores Intermedios */}
           <div className="space-y-2.5">
@@ -88,7 +127,7 @@ export const FormulaInspector = ({ trace, isOpen, onClose }: FormulaInspectorPro
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                    <span className={`font-medium px-2 py-0.5 rounded-md border ${ORIGEN_STYLES[factor.source] ?? ORIGEN_STYLES.default}`}>
                       {factor.source}
                     </span>
                     {factor.note && <span className="text-slate-400 font-mono">{factor.note}</span>}

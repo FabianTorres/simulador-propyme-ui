@@ -19,11 +19,29 @@ export interface DigitadosIngresos {
   ingresos_adeudados_at_anterior?: Record<string, number>;
 }
 
+/** Variable usada por el motor de auditoria para trazar una formula. */
+export interface BackendVariableUsada {
+  nombre: string;
+  valor: string;
+  origen: string;
+}
+
+/** Trazabilidad matematica devuelta por el motor de auditoria (Caja de Cristal). */
+export interface BackendInspector {
+  valor: string;
+  literal: string;
+  evaluado: string;
+  pasos: string[];
+  variables_usadas: BackendVariableUsada[];
+}
+
 /** Payload global del Orquestador (unifica todos los modulos). */
 export interface SimulacionGlobalRequest {
   at: string;
   modulo: string;
   patrimonio_personal: boolean;
+  /** Flag para solicitar al motor la trazabilidad de formulas reales. */
+  mostrar_formulas?: boolean;
   externos: Record<string, number>;
   vectores: Record<string, number>;
   digitados: {
@@ -44,6 +62,8 @@ export interface FilaIngreso {
   ingresos_adeudados_at_anterior: string;
   /** Columna F — Monto Ingreso Percibido (resultado del backend). */
   monto_ingreso_percibido: string;
+  /** Diccionario de trazabilidad por celda, enviado por el motor de auditoria. */
+  inspectores?: Record<string, BackendInspector>;
 }
 
 export interface TotalesIngresos {
