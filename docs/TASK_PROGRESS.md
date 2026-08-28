@@ -6,11 +6,20 @@
 - **Backend:** Motor determinista FastAPI en `http://localhost:8002` (Página 1 lista al 100%).
 - **Paleta de Diseño:** Base Pizarra Frío (`#eef2f6`), Índigo/Cobalto (`indigo-600`), Cyan (`cyan-400`), Cabeceras `slate-950`.
 - **Estructura Modular Activa:**
-  - `src/features/simulation/types/ingresos.ts`: Contratos de request y response.
-  - `src/features/simulation/api/ingresosApi.ts`: Cliente HTTP y mock inicial.
-  - `src/features/simulation/data/incomeCatalog.ts`: Metadatos estáticos y textos legales de las 22 filas.
+  - `src/features/simulation/types/ingresos.ts`: Contratos de request y response (Orquestador Global).
+  - `src/features/simulation/api/simuladorApi.ts`: Cliente HTTP contra `/api/v1/simulador/calcular`.
+  - `src/features/simulation/__mocks__/ingresosMock.ts`: Fixtures de maqueta QA extraídos del API.
+  - `src/features/simulation/hooks/useSimulador.ts`: Custom hook con toda la lógica de estado (response, digitados, handlers).
+  - `src/features/simulation/data/incomeCatalog.ts`: Metadatos estáticos y textos legales de las 24 partidas.
+  - `src/features/simulation/components/GlobalControlBar.tsx`: Barra de control superior (RUT, toggles 14D1/CRRP, botones). Componente presentacional puro.
   - `src/features/simulation/components/IncomeTable.tsx`: Tabla densa con operadores (+, −, =), bloqueos y micro-fx.
-  - `src/features/simulation/components/AuditWorkspace.tsx`: Orquestador de estado, 8 pestañas y Slide-Over Drawer.
+  - `src/features/simulation/components/AuditWorkspace.tsx`: Orquestador presentacional (invoca hook, renderiza barra + tabla + inspector).
+  - `src/features/simulation/components/FormulaInspector.tsx`: Inspector de trazabilidad (Caja de Cristal).
+  - `src/features/simulation/index.ts`: Barrel export del módulo.
+  - `src/utils/parsers.ts`: Utilidades compartidas (`parseNumero`, `formatMonto`, `debugLog`).
+  - `src/components/layout/Navbar.tsx`: Barra de navegación superior.
+- **Dependencias eliminadas:** `ag-grid-community`, `ag-grid-react` (no se usaban, ~1.2 MB ahorrados).
+- **Assets eliminados:** `App.css`, `react.svg`, `vite.svg` (scaffold de Vite sin uso).
 
 ---
 
@@ -35,6 +44,9 @@
 - [x] Inyección de filas totalizadoras virtuales (7.12 y 7) en `filasCompletas` (useMemo) porque el backend FastAPI las envía solo en `response.totales`, no en `response.filas`. La regla de visibilidad (`filasVisibles`) opera sobre este array completo. Las filas virtuales se insertan en la posición correcta: 7.12 justo después de 7.11, y 7 al final.
 - [x] Estandarización de nombres de filas con glosa oficial del SII. Diccionario `NOMBRES_OFICIALES_INGRESOS` en `incomeCatalog.ts` con las 24 partidas. La columna "Ventas y Servicios Afectos a IVA" usa `NOMBRES_OFICIALES_INGRESOS[codigo] ?? fila.concepto` como fallback.
 - [x] Refactorización a arquitectura de Orquestador Global: nuevos tipos `SimulacionGlobalRequest` (`digitados.ingresos`) y `SimulacionGlobalResponse` (`ingresos.{filas,totales,avisos}`). Endpoint unificado `POST /api/v1/simulador/calcular`. El `DigitadosIngresos` se anida en `payload.digitados.ingresos`; el componente pasa `response.ingresos` a `IncomeTable` que ahora consume `IngresosResponseData`.
+- [x] Limpieza de deuda técnica: duplicación eliminada (`parseNumero`/`formatMonto` → `utils/parsers.ts`), `console.log` reemplazado por `debugLog` condicional, `ingresosApi.ts` renombrado a `simuladorApi.ts` (`recalcularIngresos` → `recalcularCaso`, `INGRESOS_ENDPOINT` → `SIMULADOR_ENDPOINT`), mocks extraídos a `__mocks__/ingresosMock.ts`, barrel export `index.ts`, interfaz obsoleta `SimulacionIngresosRequest` eliminada, `ag-grid` desinstalado, assets Vite eliminados, `index.html` corregido (`lang="es"`, título), `@types/xlsx` agregado.
+- [x] Refactorización estructural: custom hook `useSimulador` (toda la lógica de estado y handlers en `hooks/useSimulador.ts`), componente `GlobalControlBar` (barra de control extraída como Dumb UI con `GlobalControlBarProps`), `AuditWorkspace.tsx` convertido en orquestador presentacional puro que invoca el hook y renderiza los sub-componentes.
+- [x] Corrección de bug de amnesia de estado: los vectores y externos importados desde Excel ahora se persisten en estados `vectores`/`externos` del hook. `handleRecalcularCaso` construye el payload desde estos estados (no desde `crearRequestInicial()`). `handleRevertir` los limpia junto con el resto del estado.
 - [ ] Pruebas, correcciones y otros.
 
 ### Fase 2: Página 2 (Egresos)

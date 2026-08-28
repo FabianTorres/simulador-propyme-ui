@@ -19,16 +19,6 @@ export interface DigitadosIngresos {
   ingresos_adeudados_at_anterior?: Record<string, number>;
 }
 
-/** Payload esperado por POST /api/v1/simulador/ingresos */
-export interface SimulacionIngresosRequest {
-  at: string;
-  modulo: string;
-  patrimonio_personal: boolean;
-  externos: Record<string, number>;
-  vectores: Record<string, number>;
-  digitados: DigitadosIngresos;
-}
-
 /** Payload global del Orquestador (unifica todos los modulos). */
 export interface SimulacionGlobalRequest {
   at: string;

@@ -13,20 +13,13 @@
  *  - Tooltip informativo en la Fila 7.10 si aviso_montos_propuestos_7_10.
  */
 import { useMemo } from 'react';
+import { parseNumero, formatMonto } from '../../../utils/parsers';
 import { FILA_META, NOMBRES_OFICIALES_INGRESOS } from '../data/incomeCatalog';
 import type {
   DigitadosIngresos,
   FilaIngreso,
   IngresosResponseData,
 } from '../types/ingresos';
-
-/* Helpers de presentación (parseo/formato — jamás lógica tributaria). */
-const parseNumero = (valor: string | number | null | undefined): number => {
-  const n = typeof valor === 'number' ? valor : Number(valor);
-  return Number.isFinite(n) ? n : 0;
-};
-
-const formatMonto = (valor: number): string => `$${valor.toLocaleString('es-CL')}`;
 
 /** Filas totalizadoras que siempre deben visualizarse (regla del documento). */
 const CODIGOS_TOTALIZADORES = ['7.12', '7'];

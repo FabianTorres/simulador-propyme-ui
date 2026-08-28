@@ -1,31 +1,14 @@
 ﻿/**
- * API — Página 1 (Ingresos) · Simulador Propyme
+ * Fixtures de maqueta (QA) — Pagina 1 (Ingresos).
  *
- * RESPONSABILIDAD (solo transporte de datos):
- *  - Montar el POST /api/v1/simulador/ingresos contra FastAPI.
- *  - Mientras el backend no esté desplegado, resolver la petición con un
- *    FIXTURE ESTÁTICO: captura de la respuesta que produce el motor Python.
+ * Datos estaticos que simulan la respuesta del motor FastAPI mientras
+ * el backend no esta desplegado. No contienen logica de negocio.
  *
- * Dumb UI: este módulo NO contiene reglas de negocio. No hay fórmulas,
- * sumatorias ni cálculos tributarios en el frontend. Los montos llegan
- * pre-calculados desde el backend; aquí solo se mueven datos (request →
- * fetch → response). Cualquier cambio de cifra se resuelve en el backend,
- * nunca en este archivo.
+ * Separados del cliente HTTP (simuladorApi.ts) para mantener el transporte
+ * limpio y permitir que los mocks crezcan con futuras paginas sin ensuciar
+ * el modulo de API.
  */
-import type {
-  SimulacionGlobalRequest,
-  SimulacionGlobalResponse,
-  FilaIngreso,
-} from '../types/ingresos';
-
-/**
- * URL del endpoint unificado del Orquestador Global (FastAPI / Docker).
- */
-export const INGRESOS_ENDPOINT = '/api/v1/simulador/calcular';
-
-// ---------------------------------------------------------------------------
-// Datos de la maqueta (QA) — solo datos, cero lógica
-// ---------------------------------------------------------------------------
+import type { FilaIngreso, SimulacionGlobalRequest, SimulacionGlobalResponse } from '../types/ingresos';
 
 /** Request inicial — valores digitados por defecto de la maqueta. */
 export const crearRequestInicial = (): SimulacionGlobalRequest => ({
@@ -46,13 +29,12 @@ export const crearRequestInicial = (): SimulacionGlobalRequest => ({
     },
   },
 });
-
 /**
  * FIXTURE de filas — captura de la respuesta de FastAPI para
  * crearRequestInicial(). Los montos ya fueron calculados por el motor
  * 14D1 (Python); este frontend solo los pinta.
  */
-const MOCK_FILAS_SII: FilaIngreso[] = [
+export const MOCK_FILAS_SII: FilaIngreso[] = [
   { codigo: '7.1', concepto: 'Exportaciones (Cód. 20 F29)', codigo_f22: 1400, ingresos_ano: '2400000', ingresos_adeudados_at_anterior: '50000', monto_ingreso_percibido: '2450000' },
   { codigo: '7.2', concepto: 'Facturas por ventas y servicios gravados (Cód. 502, 717 y 501 F29)', codigo_f22: 1400, ingresos_ano: '3600000', ingresos_adeudados_at_anterior: '0', monto_ingreso_percibido: '3500000' },
   { codigo: '7.3', concepto: 'Ventas y/o Servicios prestados Exentos, o No Gravados (Cód. 142 y 715 F29)', codigo_f22: 1400, ingresos_ano: '800000', ingresos_adeudados_at_anterior: '0', monto_ingreso_percibido: '800000' },
@@ -80,7 +62,7 @@ const MOCK_FILAS_SII: FilaIngreso[] = [
 ];
 
 /** Respuesta completa del motor para crearRequestInicial() (captura QA). */
-const MOCK_RESPUESTA_SII: SimulacionGlobalResponse = {
+export const MOCK_RESPUESTA_SII: SimulacionGlobalResponse = {
   ingresos: {
     filas: MOCK_FILAS_SII,
     totales: {
@@ -97,45 +79,3 @@ const MOCK_RESPUESTA_SII: SimulacionGlobalResponse = {
   },
 };
 
-/** Copia inmutable del fixture (evita que los consumidores muten el dato). */
-const copiaFixture = (): SimulacionGlobalResponse =>
-  JSON.parse(JSON.stringify(MOCK_RESPUESTA_SII)) as SimulacionGlobalResponse;
-
-// ---------------------------------------------------------------------------
-// Entry points públicos (transporte)
-// ---------------------------------------------------------------------------
-
-/**
- * Respuesta inicial síncrona de la maqueta (permite pintar la grilla sin
- * esperar la primera petición en el montaje del componente).
- */
-export const obtenerRespuestaInicial = (): SimulacionGlobalResponse =>
-  copiaFixture();
-
-/**
- * POST /api/v1/simulador/calcular — recalcula el caso en el motor de reglas
- * (Orquestador Global).
- */
-export const recalcularIngresos = async (
-  request: SimulacionGlobalRequest
-): Promise<SimulacionGlobalResponse> => {
-
-  try {
-    const response = await fetch('http://localhost:8002/api/v1/simulador/calcular', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error del motor FastAPI: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Fallo la conexión con el Backend:", error);
-    throw error;
-  }
-};

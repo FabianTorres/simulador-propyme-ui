@@ -1,75 +1,77 @@
-# React + TypeScript + Vite
+# Simulador Asistente Propyme (Frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interfaz de usuario para el simulador tributario del Régimen Propyme, construida con React, TypeScript y TailwindCSS.
 
-Currently, two official plugins are available:
+Este proyecto sigue una arquitectura estricta de **"Dumb UI" (Interfaz Tonta)**. El frontend se encarga exclusivamente de la renderización, la captura de inputs del usuario y el manejo del estado local. Toda la lógica de negocio, reglas tributarias y cálculos matemáticos residen en el backend (FastAPI).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🛠 Stack Tecnológico
 
-## React Compiler
+- **Framework:** React 18 + Vite
+- **Lenguaje:** TypeScript
+- **Estilos:** TailwindCSS
+- **Lectura de Archivos:** SheetJS (`xlsx`) para importación de datos en memoria.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🏗 Arquitectura y Patrones
 
-## Expanding the ESLint configuration
+- **Orquestador Global:** El estado de la simulación se concentra en un Custom Hook (`useSimulador.ts`). Este hook almacena la materia prima importada (Vectores y variables Externas) y los inputs "sucios" del usuario (`digitados`).
+- **Comunicación con API:** Las interacciones del usuario no disparan cálculos en tiempo real. Los cambios marcan la UI como "sincronización pendiente". El recálculo se ejecuta bajo demanda apuntando a un único endpoint global (`/api/v1/simulador/calcular`).
+- **Separación de Responsabilidades:** Componentes presentacionales puros (ej. `GlobalControlBar`, `IncomeTable`) que reciben datos y callbacks mediante props. La UI no contiene diccionarios ni reglas lógicas quemadas en el código.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🚀 Instalación y Uso
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. Instalar dependencias, levantar el entorno de desarrollo y compilación para producción:
+   ```bash
+   npm install
+   npm run dev
+   npm run build
+   ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 📁 Estructura del Proyecto y Responsabilidades
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```text
+simulador-propyme-ui/
+├── docs/                             # Documentación esencial para desarrolladores y agentes de IA.
+│   ├── Pagina_1_14D1.md              # Reglas de negocio y fórmulas tributarias (Página 1).
+│   └── TASK_PROGRESS.md              # Tracker de progreso y checklist de hitos del proyecto.
+├── public/                           # Assets estáticos públicos.
+│   ├── favicon.svg
+│   └── icons.svg
+├── src/
+│   ├── assets/                       # Assets estáticos procesados por Vite (imágenes, etc.).
+│   │   └── hero.png
+│   ├── components/                   # Componentes transversales y de layout de toda la app.
+│   │   ├── layout/
+│   │   │   └── Navbar.tsx            # Barra de navegación principal del sitio.
+│   │   └── ui/                       # (Futuro) Componentes UI genéricos (botones, modales, etc.).
+│   ├── config/                       # Configuraciones globales de la aplicación.
+│   ├── features/                     # Arquitectura basada en "Feature Slices" (Módulos de negocio).
+│   │   └── simulation/               # MÓDULO PRINCIPAL: Simulador Tributario Propyme.
+│   │       ├── __mocks__/
+│   │       │   └── ingresosMock.ts   # Fixtures y datos de prueba desacoplados de la API.
+│   │       ├── api/
+│   │       │   └── simuladorApi.ts   # Cliente HTTP (fetch). Conecta con POST /api/v1/simulador/calcular.
+│   │       ├── components/           # Componentes UI específicos de la simulación (Dumb UI).
+│   │       │   ├── AuditWorkspace.tsx # Orquestador presentacional (esqueleto, tabs y layout principal).
+│   │       │   ├── FormulaInspector.tsx # Cajón lateral (Slide-Over) para auditar reglas y fórmulas.
+│   │       │   ├── GlobalControlBar.tsx # Barra superior (RUT, Toggles 14D1/CRRP, Botones de acción).
+│   │       │   └── IncomeTable.tsx   # Grilla densa de ingresos. Muestra cálculos y captura digitados.
+│   │       ├── data/
+│   │       │   └── incomeCatalog.ts  # Diccionarios estáticos (glosas oficiales del SII, metadatos).
+│   │       ├── hooks/
+│   │       │   └── useSimulador.ts   # EL CEREBRO: Custom hook que maneja el estado global, vectores y handlers.
+│   │       ├── types/
+│   │       │   ├── ingresos.ts       # Interfaces de TypeScript para payloads de red (Request/Response).
+│   │       │   └── inspector.ts      # Interfaces para la trazabilidad de la Caja de Cristal.
+│   │       └── index.ts              # Barrel export para centralizar las importaciones del módulo.
+│   ├── lib/                          # Librerías de terceros configuradas (ej. clientes axios).
+│   ├── routes/                       # Configuración de enrutamiento (React Router).
+│   ├── utils/
+│   │   └── parsers.ts                # Funciones puras transversales (parseNumero, formatMonto, debugLog).
+│   ├── App.tsx                       # Componente raíz de React.
+│   ├── index.css                     # Estilos globales e inyección de TailwindCSS.
+│   └── main.tsx                      # Punto de entrada de la aplicación.
+├── eslint.config.js                  # Reglas de linting para mantener calidad de código.
+├── index.html                        # Plantilla HTML principal.
+├── vite.config.ts                    # Configuración del bundler Vite.
+└── package.json                      # Dependencias y scripts del proyecto.
 ```

@@ -1,4 +1,5 @@
 import type { FieldTraceability } from '../types/inspector';
+import { formatMonto } from '../../../utils/parsers';
 
 interface FormulaInspectorProps {
   trace: FieldTraceability | null;
@@ -45,7 +46,7 @@ export const FormulaInspector = ({ trace, isOpen, onClose }: FormulaInspectorPro
               {trace.label}
             </span>
             <div className="text-2xl font-bold text-slate-950 font-mono tracking-tight">
-              ${trace.calculatedValue.toLocaleString('es-CL')}
+              {formatMonto(trace.calculatedValue)}
             </div>
           </div>
 
@@ -82,7 +83,7 @@ export const FormulaInspector = ({ trace, isOpen, onClose }: FormulaInspectorPro
                     <span className="font-semibold text-slate-800">{factor.name}</span>
                     <span className="font-mono font-bold text-slate-950">
                       {typeof factor.value === 'number'
-                        ? `$${factor.value.toLocaleString('es-CL')}`
+                        ? formatMonto(factor.value)
                         : factor.value}
                     </span>
                   </div>

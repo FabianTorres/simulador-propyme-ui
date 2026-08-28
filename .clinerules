@@ -29,4 +29,26 @@
 ## 4. Memoria de Proyecto y Estado
 
 - Consulta siempre `docs/TASK_PROGRESS.md` al inicio de cada tarea para saber el estado exacto del proyecto.
+- Consulta tambien `README.md` cuando tengas dudas de la eestructura del proyecto y otra informacion importante.
 - Cada vez que completes un hito, función o componente, actualiza los checkboxes `[x]` y si es necesario agregar o modificar el estado actual y la descripción, lo haces, incluyendo agregar el resumen de ese archivo antes de finalizar el turno.
+
+## 5. Arquitectura de Estado y API (Orquestador Global)
+
+- **Endpoint Único:** Todas las peticiones de simulación se envían vía POST a `http://localhost:8002/api/v1/simulador/calcular`.
+- **Manejo de Memoria (Evitar Amnesia):** El frontend mantiene la "materia prima" en el hook `useSimulador`. Cuando se importa un Excel, los diccionarios gigantes se guardan en los estados locales `vectores` y `externos`.
+- **Estructura del Request (`SimulacionGlobalRequest`):** Al recalcular, se DEBEN enviar los vectores y externos en memoria, más los datos digitados anidados por módulo.
+  Ejemplo de Payload:
+  {
+    "at": "2025",
+    "modulo": "ingresos_14d1",
+    "patrimonio_personal": false,
+    "vectores": { "Vx010042": 1, ... }, // Extraído del estado de React
+    "externos": { "14D1": 1, "CRRP": 0, ... }, // Extraído del estado de React
+    "digitados": {
+      "ingresos": {
+        "monto_no_percibido": { "7.1": 500 },
+        "ingresos_ano": {}
+      }
+    }
+  }
+- **Estructura del Response (`SimulacionGlobalResponse`):** El backend devuelve el árbol completo. Los datos de la tabla se deben extraer del sub-nodo correspondiente (ej. `response.ingresos.filas`, `response.ingresos.totales`). No existen filas totalizadoras en el array `filas`; estas se inyectan virtualmente en el frontend usando los datos del objeto `totales`.
