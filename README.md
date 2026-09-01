@@ -26,6 +26,18 @@ Este proyecto sigue una arquitectura estricta de **"Dumb UI" (Interfaz Tonta)**.
    npm run build
    ```
 
+## 🏷️ Versionamiento (SemVer)
+
+Este proyecto utiliza Versionamiento Semántico. La versión mostrada en la cabecera de la aplicación se lee automáticamente desde el archivo `package.json` durante el proceso de compilación de Vite mediante la variable inyectada `__APP_VERSION__`.
+
+Para actualizar la versión de la interfaz, **NO edites el código fuente ni los componentes de React**. Utiliza los comandos estándar de npm en tu terminal:
+
+- **Bugs y parches:** `npm version patch` (ej. `1.0.0` → `1.0.1`).
+- **Nuevas características (ej. nueva página del SII):** `npm version minor` (ej. `1.0.1` → `1.1.0`).
+- **Cambios estructurales masivos:** `npm version major` (ej. `1.1.0` → `2.0.0`).
+
+Al ejecutar estos comandos, npm actualizará el `package.json` automáticamente y creará un tag en Git. La nueva versión se reflejará en la UI en el próximo `npm run dev` o `npm run build`.
+
 ## 📁 Estructura del Proyecto y Responsabilidades
 
 ```text

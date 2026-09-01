@@ -183,6 +183,34 @@ export const IncomeTable = ({
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse">
         <thead>
+          {/* 1. Fila superior estilo Excel (Letras) */}
+          <tr className="bg-slate-900 border-b border-slate-800 text-indigo-400 font-mono text-[11px] font-bold uppercase tracking-widest">
+            <th className="border-r border-slate-800"></th> {/* Cód */}
+            <th></th> {/* Signo inicial */}
+            <th className="py-1.5 text-center border-r border-slate-800">A</th>
+            <th className="py-1.5 text-center border-r border-slate-800">H</th>
+            <th></th> {/* + */}
+            <th className="py-1.5 text-center border-r border-slate-800">B</th>
+            <th></th> {/* − */}
+            <th className="py-1.5 text-center border-r border-slate-800">C</th>
+            {avisos.mostrar_columna_patrimonio && (
+              <>
+                <th></th> {/* − */}
+                <th className="py-1.5 text-center border-r border-slate-800">D</th>
+              </>
+            )}
+            {avisos.mostrar_columna_renta_presunta && (
+              <>
+                <th></th> {/* − */}
+                <th className="py-1.5 text-center border-r border-slate-800">E</th>
+              </>
+            )}
+            <th></th> {/* = */}
+            <th className="py-1.5 text-center border-r border-slate-800 bg-indigo-950/80">F</th>
+            <th className="py-1.5 text-center">G</th>
+          </tr>
+
+          {/* 2. Fila de títulos originales */}
           <tr className="bg-slate-950 text-white">
             <th className="py-3 px-3 text-center w-12 border-r border-slate-800 text-[10px] uppercase font-bold tracking-wider text-slate-400">Cód.</th>
             <th className="py-3 px-1 text-center w-8 text-cyan-300 font-black text-sm">·</th>
@@ -220,7 +248,7 @@ export const IncomeTable = ({
             // NUEVA REGLA: ¿Se puede editar la Columna B en esta fila?
             const esEditableB = CODIGOS_B_EDITABLES.includes(codigo);
             const meta = FILA_META[codigo];
-            const percibido = 
+            const percibido =
               codigo === '7.12' ? parseNumero(totales.fila_7_12) :
               codigo === CODIGO_GRAN_TOTAL ? parseNumero(totales.fila_7_total) :
               parseNumero(fila.monto_ingreso_percibido);

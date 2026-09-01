@@ -15,6 +15,14 @@ const ORIGEN_STYLES: Record<string, string> = {
   default: 'text-slate-700 bg-slate-50 border-slate-200',
 };
 
+const ORIGEN_ICONS: Record<string, string> = {
+  vector: '🏛️',    // Propuesta del SII / Base de datos
+  digitado: '✏️',   // Input manual del usuario
+  externo: '🔗',    // Variable de contexto global
+  calculado: '⚙️',   // Motor de reglas
+  default: '📄',
+};
+
 export const FormulaInspector = ({ trace, isOpen, onClose }: FormulaInspectorProps) => {
   if (!isOpen || !trace) return null;
 
@@ -127,8 +135,9 @@ export const FormulaInspector = ({ trace, isOpen, onClose }: FormulaInspectorPro
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className={`font-medium px-2 py-0.5 rounded-md border ${ORIGEN_STYLES[factor.source] ?? ORIGEN_STYLES.default}`}>
-                      {factor.source}
+                    <span className={`flex items-center gap-1.5 font-medium px-2 py-0.5 rounded-md border ${ORIGEN_STYLES[factor.source] ?? ORIGEN_STYLES.default}`}>
+                      <span className="text-[10px]">{ORIGEN_ICONS[factor.source] ?? ORIGEN_ICONS.default}</span>
+                      <span className="capitalize">{factor.source}</span>
                     </span>
                     {factor.note && <span className="text-slate-400 font-mono">{factor.note}</span>}
                   </div>

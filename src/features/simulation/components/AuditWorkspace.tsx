@@ -97,7 +97,10 @@ const trazabilidadDesdeBackend = (
     formula: inspector.literal,
     evaluatedExpression: inspector.evaluado,
     calculationSteps: inspector.pasos,
-    isManualInput: inspector.literal.includes('dig_'),
+    isManualInput:
+      inspector.pasos.length === 0 &&
+      inspector.variables_usadas.length === 1 &&
+      inspector.variables_usadas[0].origen === 'digitado',
     factors: inspector.variables_usadas.map((variable) => ({
       name: variable.nombre,
       source: variable.origen,
@@ -286,9 +289,7 @@ export const AuditWorkspace = () => {
           </div>
           <div>
             <h2 className="text-sm font-bold text-white tracking-tight">Página 1 · Ingresos</h2>
-            <p className="text-[11px] text-slate-400 font-mono">
-              POST /api/v1/simulador/calcular · Motor FastAPI
-            </p>
+
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
