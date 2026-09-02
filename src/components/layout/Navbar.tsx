@@ -18,7 +18,7 @@ export const Navbar = () => {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="font-mono text-slate-300 text-[11px]">v{__APP_VERSION__} · FastAPI Ready</span>
+            <span className="font-mono text-slate-300 text-[11px]">v{__APP_VERSION__}</span>
           </div>
         </div>
       </div>

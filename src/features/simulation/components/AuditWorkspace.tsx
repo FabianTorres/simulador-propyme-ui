@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { FormulaInspector } from './FormulaInspector';
 import { IncomeTable } from './IncomeTable';
 import { GlobalControlBar } from './GlobalControlBar';
+import { PatrimonioModal } from './PatrimonioModal';
 import { useSimulador } from '../hooks/useSimulador';
 import { FILA_META } from '../data/incomeCatalog';
 import type { BackendInspector, DigitadosIngresos, FilaIngreso, SimulacionGlobalResponse } from '../types/ingresos';
@@ -116,37 +117,7 @@ function construirTrazabilidad(
   response: SimulacionGlobalResponse,
   digitados: DigitadosIngresos
 ): FieldTraceability {
-  const { filas, totales } = response.ingresos;
-  // Totales consolidados (7.12 y 7).
-  if (key === 'total_7_12' || key === 'total_7') {
-    const es12 = key === 'total_7_12';
-    const valor = es12
-      ? parseNumero(totales.fila_7_12)
-      : parseNumero(totales.fila_7_total);
-    return {
-      fieldId: key,
-      casillaCode: es12 ? 'F22 [C1400] · Subtotal 7.12' : 'F22 [C1410] · Fila 7 TOTAL',
-      label: es12 ? 'Total por Ventas y Servicios (7.12)' : 'TOTAL INGRESOS — Línea 1 F22',
-      calculatedValue: valor,
-      formula: es12
-        ? 'POS(7.1 + 7.2 + 7.3 + 7.4 + 7.5 + 7.6 + 7.7 − 7.8 + 7.9 + 7.11)'
-        : '7.12 + 7.13 + 7.14 + 7.15 + 7.16 + 7.17 + 7.18 + 7.19 + 7.20 + 7.25 + 7.26 + 7.27 + 7.10',
-      evaluatedExpression: es12 ? totales.fila_7_12 : totales.fila_7_total,
-      calculationSteps: [],
-      isManualInput: false,
-      factors: filas
-        .filter((f) =>
-          es12 ? f.codigo !== '7' : f.codigo !== '7' && f.codigo !== '7.12'
-        )
-        .map((f) => ({
-          name: `Fila ${f.codigo} · ${f.concepto.slice(0, 42)}${f.concepto.length > 42 ? '…' : ''}`,
-          source: es12 ? 'Col. B (Neto)' : 'Col. F (Percibido)',
-          value: es12 ? parseNumero(f.ingresos_ano) : parseNumero(f.monto_ingreso_percibido),
-        })),
-      legalReference: 'Art. 14 letra D) LIR · Línea 1 F22',
-      status: 'ok',
-    };
-  }
+  const { filas } = response.ingresos;
   const codigo = parteCodigo(key);
   const fila = filas.find((f) => f.codigo === codigo);
   const seccion = categoriaSeccion(key);
@@ -210,6 +181,10 @@ export const AuditWorkspace = () => {
   const [activePageId, setActivePageId] = useState<number>(1);
   const simulador = useSimulador();
   const activeTrace = construirTrazabilidad(simulador.selectedField, simulador.response, simulador.digitados);
+
+  const avisoValor1 = simulador.response.ingresos.avisos.valor1_pcalc;
+  const avisoValor2 = simulador.response.ingresos.avisos.valor2_pcalc;
+  const requiresModal = avisoValor1 !== undefined && avisoValor2 !== undefined && simulador.patrimonioPersonal === null;
   return (
     <div className="space-y-4">
       {/* ===== 1. BARRA GLOBAL DE CONTROL Y PERSISTENCIA ===== */}
@@ -345,6 +320,17 @@ export const AuditWorkspace = () => {
         trace={activeTrace}
         isOpen={simulador.isInspectorOpen}
         onClose={() => simulador.setIsInspectorOpen(false)}
+      />
+
+      {/* ===== Modal Empresario Individual (Patrimonio Personal) ===== */}
+      <PatrimonioModal
+        isOpen={requiresModal}
+        valor1={avisoValor1 ?? 0}
+        valor2={avisoValor2 ?? 0}
+        onRespond={(res) => {
+          simulador.setPatrimonioPersonal(res);
+          simulador.setHasChanges(true);
+        }}
       />
     </div>
   );

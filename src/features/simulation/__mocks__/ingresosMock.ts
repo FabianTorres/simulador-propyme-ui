@@ -65,10 +65,6 @@ export const MOCK_FILAS_SII: FilaIngreso[] = [
 export const MOCK_RESPUESTA_SII: SimulacionGlobalResponse = {
   ingresos: {
     filas: MOCK_FILAS_SII,
-    totales: {
-      fila_7_12: '9050000',
-      fila_7_total: '10750000',
-    },
     // Flags de UI calculados por el motor; el frontend solo los aplica.
     avisos: {
       aviso_montos_propuestos_7_10: true,

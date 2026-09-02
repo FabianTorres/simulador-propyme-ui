@@ -134,50 +134,18 @@ export const IncomeTable = ({
   onDigitadoChange,
   onOpenInspector,
 }: IncomeTableProps) => {
-  const { filas, totales, avisos } = response;
+  const { filas, avisos } = response;
 
-  // 1. Se inyectan las filas totalizadoras porque el backend FastAPI las envia
-  //    en response.totales en lugar de response.ingresos.filas (Dumb UI).
-  const filasCompletas = useMemo(() => {
-    const arr = [...filas];
-
-    if (!arr.find((f) => f.codigo === '7.12')) {
-      const idx = arr.findIndex((f) => f.codigo === '7.11');
-      const fila712: FilaIngreso = {
-        codigo: '7.12',
-        concepto: 'Total Ingresos por ventas y servicios',
-        codigo_f22: 1400,
-        ingresos_ano: '0',
-        ingresos_adeudados_at_anterior: '0',
-        monto_ingreso_percibido: '0',
-      };
-      if (idx !== -1) arr.splice(idx + 1, 0, fila712);
-      else arr.push(fila712);
-    }
-
-    if (!arr.find((f) => f.codigo === '7')) {
-      arr.push({
-        codigo: '7',
-        concepto: 'TOTAL INGRESOS',
-        codigo_f22: 1410,
-        ingresos_ano: '0',
-        ingresos_adeudados_at_anterior: '0',
-        monto_ingreso_percibido: '0',
-      } as FilaIngreso);
-    }
-
-    return arr;
-  }, [filas]);
-
-  // 2. Aplicamos la regla de visibilidad sobre el array completo (ya con totalizadores)
+  // Se aplica la regla de visibilidad directamente sobre filas. Las filas
+  // totalizadoras (7.12 y 7) ahora vienen nativamente desde el backend.
   const filasVisibles = useMemo(() => {
-    const filasDatos = filasCompletas.filter((f) => !CODIGOS_TOTALIZADORES.includes(f.codigo));
+    const filasDatos = filas.filter((f) => !CODIGOS_TOTALIZADORES.includes(f.codigo));
     const hayPropuestas = filasDatos.some(filaConValorPropuesto);
-    if (showAllRows || !hayPropuestas) return filasCompletas;
-    return filasCompletas.filter(
+    if (showAllRows || !hayPropuestas) return filas;
+    return filas.filter(
       (f) => CODIGOS_TOTALIZADORES.includes(f.codigo) || filaConValorPropuesto(f)
     );
-  }, [filasCompletas, showAllRows]);
+  }, [filas, showAllRows]);
 
   return (
     <div className="overflow-x-auto">
@@ -248,10 +216,7 @@ export const IncomeTable = ({
             // NUEVA REGLA: ¿Se puede editar la Columna B en esta fila?
             const esEditableB = CODIGOS_B_EDITABLES.includes(codigo);
             const meta = FILA_META[codigo];
-            const percibido =
-              codigo === '7.12' ? parseNumero(totales.fila_7_12) :
-              codigo === CODIGO_GRAN_TOTAL ? parseNumero(totales.fila_7_total) :
-              parseNumero(fila.monto_ingreso_percibido);
+            const percibido = parseNumero(fila.monto_ingreso_percibido);
             const mostrarTooltip7_10 = codigo === '7.10' && avisos.aviso_montos_propuestos_7_10;
 
             return (
@@ -275,7 +240,7 @@ export const IncomeTable = ({
 
                 {/* Col. A/H — Ingresos percibidos de montos adeudados de AT anterior */}
                 <td className="py-2 px-3 border-r border-slate-100 bg-slate-50/50">
-                  {esTotalizador ? (
+                  {codigo === CODIGO_GRAN_TOTAL ? null : esTotalizador ? (
                     <span className="block w-full text-center font-mono text-xs text-slate-300">—</span>
                   ) : adeudadosAT > 0 ? (
                     <AuditableCellInput
@@ -292,17 +257,19 @@ export const IncomeTable = ({
                 </td>
 
                 {/* Signo + */}
-                <td className="py-2 px-1 text-center font-bold text-slate-400 text-sm">+</td>
+                <td className="py-2 px-1 text-center font-bold text-slate-400 text-sm">
+                  {codigo === CODIGO_GRAN_TOTAL ? null : '+'}
+                </td>
 
                 {/* Col. B — Ingresos del Año (Neto) */}
                 <td className="py-2 px-3 border-r border-slate-100">
-                  {esTotalizador ? (
+                  {codigo === CODIGO_GRAN_TOTAL ? null : esTotalizador ? (
                     <button
                       type="button"
-                      onClick={() => onOpenInspector(codigo === '7.12' ? 'total_7_12' : 'total_7')}
+                      onClick={() => onOpenInspector(codigo === '7.12' ? 'neto_7.12' : 'neto_7')}
                       className="w-full text-center font-mono text-xs font-bold text-slate-950 hover:text-indigo-700 cursor-pointer"
                     >
-                      {esTotalizador ? '—' : formatMonto(netoBackend)}
+                      {formatMonto(netoBackend)}
                     </button>
                   ) : (
                     <AuditableCellInput
@@ -317,16 +284,16 @@ export const IncomeTable = ({
                 </td>
 
                 {/* Signo − */}
-                <td className="py-2 px-1 text-center font-bold text-slate-400 text-sm">−</td>
+                <td className="py-2 px-1 text-center font-bold text-slate-400 text-sm">
+                  {codigo === CODIGO_GRAN_TOTAL ? null : '−'}
+                </td>
 
                 {/* Col. C — Monto No Percibido del Año (Neto) */}
                 <td className="py-2 px-3 border-r border-slate-100">
-                  {esTotalizador ? (
-                    <span className="block w-full text-center font-mono text-xs text-slate-300">—</span>
-                  ) : (
+                  {codigo === CODIGO_GRAN_TOTAL ? null : (
                     <AuditableCellInput
                       value={digitados.monto_no_percibido[codigo] ?? 0}
-                      disabled={bloqueado}
+                      disabled={bloqueado || esTotalizador}
                       traceKey={`noPerc_${codigo}`}
                       onChange={(v) => onDigitadoChange('monto_no_percibido', codigo, v)}
                       onOpenInspector={onOpenInspector}
@@ -337,14 +304,14 @@ export const IncomeTable = ({
                 {/* Col. D — No Considerar Patrimonio Personal */}
                 {avisos.mostrar_columna_patrimonio && (
                   <>
-                    <td className="py-2 px-1 text-center font-bold text-slate-400 text-sm">−</td>
+                    <td className="py-2 px-1 text-center font-bold text-slate-400 text-sm">
+                      {codigo === CODIGO_GRAN_TOTAL ? null : '−'}
+                    </td>
                     <td className="py-2 px-3 border-r border-slate-100">
-                      {esTotalizador ? (
-                        <span className="block w-full text-center font-mono text-xs text-slate-300">—</span>
-                      ) : (
+                      {codigo === CODIGO_GRAN_TOTAL ? null : (
                         <AuditableCellInput
                           value={digitados.no_considerar_patrimonio[codigo] ?? 0}
-                          disabled={bloqueado}
+                          disabled={bloqueado || esTotalizador}
                           traceKey={`patrimonio_${codigo}`}
                           onChange={(v) => onDigitadoChange('no_considerar_patrimonio', codigo, v)}
                           onOpenInspector={onOpenInspector}
@@ -357,14 +324,14 @@ export const IncomeTable = ({
                 {/* Col. E — Facturas de Actividad de Renta Presunta */}
                 {avisos.mostrar_columna_renta_presunta && (
                   <>
-                    <td className="py-2 px-1 text-center font-bold text-slate-400 text-sm">−</td>
+                    <td className="py-2 px-1 text-center font-bold text-slate-400 text-sm">
+                      {codigo === CODIGO_GRAN_TOTAL ? null : '−'}
+                    </td>
                     <td className="py-2 px-3 border-r border-slate-100">
-                      {esTotalizador ? (
-                        <span className="block w-full text-center font-mono text-xs text-slate-300">—</span>
-                      ) : (
+                      {codigo === CODIGO_GRAN_TOTAL ? null : (
                         <AuditableCellInput
                           value={digitados.factura_renta_presunta[codigo] ?? 0}
-                          disabled={bloqueado}
+                          disabled={bloqueado || esTotalizador}
                           traceKey={`presunta_${codigo}`}
                           onChange={(v) => onDigitadoChange('factura_renta_presunta', codigo, v)}
                           onOpenInspector={onOpenInspector}
@@ -375,13 +342,15 @@ export const IncomeTable = ({
                 )}
 
                 {/* Signo = */}
-                <td className="py-2 px-1 text-center font-bold text-indigo-600 text-sm">=</td>
+                <td className="py-2 px-1 text-center font-bold text-indigo-600 text-sm">
+                  {codigo === CODIGO_GRAN_TOTAL ? null : '='}
+                </td>
 
                 {/* Col. F — Monto Ingreso Percibido */}
                 <td className={`py-2 px-3 border-r border-slate-100 ${codigo === CODIGO_GRAN_TOTAL ? 'bg-cyan-50/80' : 'bg-slate-50/60'}`}>
                   <button
                     type="button"
-                    onClick={() => onOpenInspector(codigo === '7' ? 'total_7' : `percibido_${codigo}`)}
+                    onClick={() => onOpenInspector(`percibido_${codigo}`)}
                     className={`w-full text-center font-mono font-bold hover:text-indigo-700 cursor-pointer ${codigo === CODIGO_GRAN_TOTAL ? 'text-sm text-cyan-800' : 'text-xs text-slate-950'}`}
                   >
                     {formatMonto(percibido)}

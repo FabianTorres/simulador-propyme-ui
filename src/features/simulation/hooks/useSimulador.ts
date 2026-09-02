@@ -43,6 +43,7 @@ export interface UseSimuladorReturn {
   selectedField: string;
   isInspectorOpen: boolean;
   showAllRows: boolean;
+  patrimonioPersonal: boolean | null;
 
   /* ── Acciones ─────────────────────────────────────────── */
   setRutSeleccionado: (rut: string) => void;
@@ -51,6 +52,7 @@ export interface UseSimuladorReturn {
   setHasChanges: (val: boolean) => void;
   setIsInspectorOpen: (val: boolean) => void;
   setShowAllRows: (val: boolean | ((prev: boolean) => boolean)) => void;
+  setPatrimonioPersonal: (val: boolean | null) => void;
 
   handleRecalcularCaso: () => Promise<void>;
   handleFileUpload: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
@@ -81,6 +83,7 @@ export const useSimulador = (): UseSimuladorReturn => {
   const [selectedField, setSelectedField] = useState<string>('total_7');
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false);
   const [showAllRows, setShowAllRows] = useState<boolean>(false);
+  const [patrimonioPersonal, setPatrimonioPersonal] = useState<boolean | null>(null);
 
   // Memoria persistente de vectores y externos importados desde Excel
   // (se preservan entre recalculaciones para evitar amnesia de estado).
@@ -112,6 +115,7 @@ export const useSimulador = (): UseSimuladorReturn => {
     setDigitados(crearRequestInicial().digitados.ingresos);
     setVectores({});
     setExternos({});
+    setPatrimonioPersonal(null);
     setHasChanges(false);
     setShowAllRows(false);
     setSelectedField('total_7');
@@ -136,7 +140,7 @@ const handleRecalcularCaso = async () => {
       const payload: SimulacionGlobalRequest = {
         at: '2025',
         modulo: 'ingresos_14d1',
-        patrimonio_personal: false,
+        patrimonio_personal: patrimonioPersonal,
         mostrar_formulas: true,
         vectores: vectores,
         externos: {
@@ -229,7 +233,7 @@ const handleRecalcularCaso = async () => {
       const payload: SimulacionGlobalRequest = {
         at: '2025',
         modulo: 'ingresos_14d1',
-        patrimonio_personal: false,
+        patrimonio_personal: patrimonioPersonal,
         mostrar_formulas: true,
         vectores: vectoresParseados,
         externos: { ...calculadoraParseada, '14D1': atributo14D1 ? 1 : 0, CRRP: atributoCRRP ? 1 : 0 },
@@ -262,12 +266,14 @@ const handleRecalcularCaso = async () => {
     selectedField,
     isInspectorOpen,
     showAllRows,
+    patrimonioPersonal,
     setRutSeleccionado,
     setAtributo14D1,
     setAtributoCRRP,
     setHasChanges,
     setIsInspectorOpen,
     setShowAllRows,
+    setPatrimonioPersonal,
     handleRecalcularCaso,
     handleFileUpload,
     handleRevertir,

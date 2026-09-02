@@ -39,7 +39,7 @@ export interface BackendInspector {
 export interface SimulacionGlobalRequest {
   at: string;
   modulo: string;
-  patrimonio_personal: boolean;
+  patrimonio_personal: boolean | null;
   /** Flag para solicitar al motor la trazabilidad de formulas reales. */
   mostrar_formulas?: boolean;
   externos: Record<string, number>;
@@ -66,23 +66,18 @@ export interface FilaIngreso {
   inspectores?: Record<string, BackendInspector>;
 }
 
-export interface TotalesIngresos {
-  fila_7_12: string;
-  fila_7_total: string;
-}
-
-/** Flags de UI que el backend calcula; el frontend solo aplica. */
 export interface AvisosIngresos {
   aviso_montos_propuestos_7_10: boolean;
   aviso_arriendos_bienes_raices: boolean;
   mostrar_columna_patrimonio: boolean;
   mostrar_columna_renta_presunta: boolean;
+  valor1_pcalc?: number;
+  valor2_pcalc?: number;
 }
 
 /** Datos de respuesta para la Pagina 1 (Ingresos) dentro del wrapper global. */
 export interface IngresosResponseData {
   filas: FilaIngreso[];
-  totales: TotalesIngresos;
   avisos: AvisosIngresos;
 }
 

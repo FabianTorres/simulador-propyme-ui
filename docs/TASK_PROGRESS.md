@@ -43,7 +43,7 @@
 - [x] Fila "TOTAL INGRESOS" (código 7) resaltada visualmente: fondo celeste claro (`bg-cyan-50/80`), borde superior cyan (`border-t-2 border-t-cyan-300`), columna "Monto Ingreso Percibido" con texto más grande (`text-sm`) en cyan oscuro (`text-cyan-800`). Se diferencia de la fila 7.12 que mantiene el gris pizarra.
 - [x] Inyección de filas totalizadoras virtuales (7.12 y 7) en `filasCompletas` (useMemo) porque el backend FastAPI las envía solo en `response.totales`, no en `response.filas`. La regla de visibilidad (`filasVisibles`) opera sobre este array completo. Las filas virtuales se insertan en la posición correcta: 7.12 justo después de 7.11, y 7 al final.
 - [x] Estandarización de nombres de filas con glosa oficial del SII. Diccionario `NOMBRES_OFICIALES_INGRESOS` en `incomeCatalog.ts` con las 24 partidas. La columna "Ventas y Servicios Afectos a IVA" usa `NOMBRES_OFICIALES_INGRESOS[codigo] ?? fila.concepto` como fallback.
-- [x] Refactorización a arquitectura de Orquestador Global: nuevos tipos `SimulacionGlobalRequest` (`digitados.ingresos`) y `SimulacionGlobalResponse` (`ingresos.{filas,totales,avisos}`). Endpoint unificado `POST /api/v1/simulador/calcular`. El `DigitadosIngresos` se anida en `payload.digitados.ingresos`; el componente pasa `response.ingresos` a `IncomeTable` que ahora consume `IngresosResponseData`.
+- [x] Refactorización a arquitectura de Orquestador Global: nuevos tipos `SimulacionGlobalRequest` (`digitados.ingresos`) y `SimulacionGlobalResponse` (`ingresos.{filas,avisos}`). Endpoint unificado `POST /api/v1/simulador/calcular`. El `DigitadosIngresos` se anida en `payload.digitados.ingresos`; el componente pasa `response.ingresos` a `IncomeTable` que ahora consume `IngresosResponseData`.
 - [x] Limpieza de deuda técnica: duplicación eliminada (`parseNumero`/`formatMonto` → `utils/parsers.ts`), `console.log` reemplazado por `debugLog` condicional, `ingresosApi.ts` renombrado a `simuladorApi.ts` (`recalcularIngresos` → `recalcularCaso`, `INGRESOS_ENDPOINT` → `SIMULADOR_ENDPOINT`), mocks extraídos a `__mocks__/ingresosMock.ts`, barrel export `index.ts`, interfaz obsoleta `SimulacionIngresosRequest` eliminada, `ag-grid` desinstalado, assets Vite eliminados, `index.html` corregido (`lang="es"`, título), `@types/xlsx` agregado.
 - [x] Refactorización estructural: custom hook `useSimulador` (toda la lógica de estado y handlers en `hooks/useSimulador.ts`), componente `GlobalControlBar` (barra de control extraída como Dumb UI con `GlobalControlBarProps`), `AuditWorkspace.tsx` convertido en orquestador presentacional puro que invoca el hook y renderiza los sub-componentes.
 - [x] Corrección de bug de amnesia de estado: los vectores y externos importados desde Excel ahora se persisten en estados `vectores`/`externos` del hook. `handleRecalcularCaso` construye el payload desde estos estados (no desde `crearRequestInicial()`). `handleRevertir` los limpia junto con el resto del estado.
@@ -53,6 +53,8 @@
 - [ ] Pruebas, correcciones y otros.
  - [x] Indicadores visuales de columnas oficiales (Col. A-H-B-C-D-E-F-G) en el `thead` de `IncomeTable.tsx`, para facilitar la referencia cruzada con el formulario del SII. Se agregaron etiquetas sutiles encima de cada titulo de columna sin alterar anchos, renderizaciones condicionales ni logica de la tabla.
  - [x] Adaptación al nuevo contrato BFF del motor de auditoría: Se ajustó la detección de campos manuales evaluando la ausencia de pasos matemáticos y el origen de la variable (`digitado`). Se incorporaron íconos representativos en la Caja de Cristal para la procedencia de los datos (🏛️ vector, ✏️ digitado, 🔗 externo, ⚙️ calculado).
+ - [x] Sistema de versionamiento real: `__APP_VERSION__` se lee desde `package.json` y se inyecta via `define` en `vite.config.ts`. Se reemplazo el string quemado `v2026.1` en `Navbar.tsx` por la variable global, y se declaro `__APP_VERSION__` en `src/vite-env.d.ts` para que TypeScript la reconozca.
+ - [x] Modal de Empresario Individual (Patrimonio Personal): se agregaron `valor1_pcalc` y `valor2_pcalc` a `AvisosIngresos`, se creo el componente `PatrimonioModal.tsx` y se integro en `AuditWorkspace.tsx`. El estado `patrimonioPersonal` (boolean | null) se envia en la raiz del payload (`patrimonio_personal`) y se reinicia al revertir.
  - [x] Sistema de versionamiento real: `__APP_VERSION__` se lee desde `package.json` y se inyecta via `define` en `vite.config.ts`. Se reemplazo el string quemado `v2026.1` en `Navbar.tsx` por la variable global, y se declaro `__APP_VERSION__` en `src/vite-env.d.ts` para que TypeScript la reconozca.
 
 ### Fase 2: Página 2 (Egresos)
@@ -64,3 +66,6 @@
 ### Fase 3: Páginas 3 a 8
 
 - [ ] Retiros, RLI, Base Imponible, KPT, RRE, Resumen y Envío.
+
+
+

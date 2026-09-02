@@ -16,7 +16,6 @@ export type { FilaMeta } from './data/incomeCatalog';
 export type {
   DigitadosIngresos,
   FilaIngreso,
-  TotalesIngresos,
   AvisosIngresos,
   IngresosResponseData,
   SimulacionGlobalRequest,
