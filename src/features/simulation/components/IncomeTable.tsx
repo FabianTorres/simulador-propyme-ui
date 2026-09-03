@@ -30,6 +30,15 @@ const CODIGO_GRAN_TOTAL = '7';
 /** Filas de la Columna B que el documento permite editar explícitamente. */
 const CODIGOS_B_EDITABLES = ['7.11', '7.13', '7.14', '7.16', '7.19', '7.20', '7.27'];
 
+/** Filas que contienen campos activos o bloqueados en Columna C */
+const ROWS_CON_COL_C = ['7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '7.8', '7.9', '7.14', '7.15', '7.17', '7.18', '7.20'];
+
+/** Filas que contienen campos activos o bloqueados en Columna D */
+const ROWS_CON_COL_D = ['7.14', '7.15', '7.17', '7.18'];
+
+/** Filas que contienen campos activos o bloqueados en Columna E */
+const ROWS_CON_COL_E = ['7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '7.8', '7.9', '7.14', '7.15', '7.17', '7.18'];
+
 /** True si el motor propuso montos en la fila (col. B o col. A/H > 0). */
 const filaConValorPropuesto = (fila: FilaIngreso): boolean =>
   parseNumero(fila.ingresos_ano) > 0 ||
@@ -153,30 +162,37 @@ export const IncomeTable = ({
         <thead>
           {/* 1. Fila superior estilo Excel (Letras) */}
           <tr className="bg-slate-900 border-b border-slate-800 text-indigo-400 font-mono text-[11px] font-bold uppercase tracking-widest">
-            <th className="border-r border-slate-800"></th> {/* Cód */}
-            <th></th> {/* Signo inicial */}
-            <th className="py-1.5 text-center border-r border-slate-800">A</th>
-            <th className="py-1.5 text-center border-r border-slate-800">H</th>
-            <th></th> {/* + */}
-            <th className="py-1.5 text-center border-r border-slate-800">B</th>
-            <th></th> {/* − */}
-            <th className="py-1.5 text-center border-r border-slate-800">C</th>
-            {avisos.mostrar_columna_patrimonio && (
-              <>
-                <th></th> {/* − */}
-                <th className="py-1.5 text-center border-r border-slate-800">D</th>
-              </>
-            )}
-            {avisos.mostrar_columna_renta_presunta && (
-              <>
-                <th></th> {/* − */}
-                <th className="py-1.5 text-center border-r border-slate-800">E</th>
-              </>
-            )}
-            <th></th> {/* = */}
-            <th className="py-1.5 text-center border-r border-slate-800 bg-indigo-950/80">F</th>
-            <th className="py-1.5 text-center">G</th>
-          </tr>
+  {/* Cód */}
+  <th className="border-r border-slate-800"></th>
+  {/* Signo inicial */}
+  <th></th>
+  <th className="py-1.5 text-center border-r border-slate-800">A</th>
+  <th className="py-1.5 text-center border-r border-slate-800">H</th>
+  {/* + */}
+  <th></th>
+  <th className="py-1.5 text-center border-r border-slate-800">B</th>
+  {/* − */}
+  <th></th>
+  <th className="py-1.5 text-center border-r border-slate-800">C</th>
+  {avisos.mostrar_columna_patrimonio && (
+    <>
+      {/* − */}
+      <th></th>
+      <th className="py-1.5 text-center border-r border-slate-800">D</th>
+    </>
+  )}
+  {avisos.mostrar_columna_renta_presunta && (
+    <>
+      {/* − */}
+      <th></th>
+      <th className="py-1.5 text-center border-r border-slate-800">E</th>
+    </>
+  )}
+  {/* = */}
+  <th></th>
+  <th className="py-1.5 text-center border-r border-slate-800 bg-indigo-950/80">F</th>
+  <th className="py-1.5 text-center">G</th>
+</tr>
 
           {/* 2. Fila de títulos originales */}
           <tr className="bg-slate-950 text-white">
@@ -215,6 +231,12 @@ export const IncomeTable = ({
             const bloqueado = !esTotalizador && netoBackend === 0;
             // NUEVA REGLA: ¿Se puede editar la Columna B en esta fila?
             const esEditableB = CODIGOS_B_EDITABLES.includes(codigo);
+            const mostrarC = ROWS_CON_COL_C.includes(codigo);
+            const mostrarD = ROWS_CON_COL_D.includes(codigo);
+            const mostrarE = ROWS_CON_COL_E.includes(codigo);
+
+            // Regla especial de la normativa: En la fila 7.8, Col C existe pero siempre está bloqueada
+            const bloqueadoC = bloqueado || esTotalizador || codigo === '7.8';
             const meta = FILA_META[codigo];
             const percibido = parseNumero(fila.monto_ingreso_percibido);
             const mostrarTooltip7_10 = codigo === '7.10' && avisos.aviso_montos_propuestos_7_10;
@@ -245,7 +267,7 @@ export const IncomeTable = ({
                   ) : adeudadosAT > 0 ? (
                     <AuditableCellInput
                       value={digitados.ingresos_adeudados_at_anterior?.[codigo] ?? adeudadosAT}
-                      disabled={false}
+                      disabled={codigo === '7.8'} // Cumpliendo regla "(Bloquear este campo)"
                       isPropuesta={true}
                       traceKey={`adeudados_${codigo}`}
                       onChange={(v) => onDigitadoChange('ingresos_adeudados_at_anterior', codigo, v)}
@@ -283,17 +305,17 @@ export const IncomeTable = ({
                   )}
                 </td>
 
-                {/* Signo − */}
+                {/* Signo − (para C) */}
                 <td className="py-2 px-1 text-center font-bold text-slate-400 text-sm">
-                  {codigo === CODIGO_GRAN_TOTAL ? null : '−'}
+                  {codigo === CODIGO_GRAN_TOTAL || !mostrarC ? null : '−'}
                 </td>
 
                 {/* Col. C — Monto No Percibido del Año (Neto) */}
                 <td className="py-2 px-3 border-r border-slate-100">
-                  {codigo === CODIGO_GRAN_TOTAL ? null : (
+                  {codigo === CODIGO_GRAN_TOTAL || !mostrarC ? null : (
                     <AuditableCellInput
                       value={digitados.monto_no_percibido[codigo] ?? 0}
-                      disabled={bloqueado || esTotalizador}
+                      disabled={bloqueadoC}
                       traceKey={`noPerc_${codigo}`}
                       onChange={(v) => onDigitadoChange('monto_no_percibido', codigo, v)}
                       onOpenInspector={onOpenInspector}
@@ -305,10 +327,10 @@ export const IncomeTable = ({
                 {avisos.mostrar_columna_patrimonio && (
                   <>
                     <td className="py-2 px-1 text-center font-bold text-slate-400 text-sm">
-                      {codigo === CODIGO_GRAN_TOTAL ? null : '−'}
+                      {codigo === CODIGO_GRAN_TOTAL || !mostrarD ? null : '−'}
                     </td>
                     <td className="py-2 px-3 border-r border-slate-100">
-                      {codigo === CODIGO_GRAN_TOTAL ? null : (
+                      {codigo === CODIGO_GRAN_TOTAL || !mostrarD ? null : (
                         <AuditableCellInput
                           value={digitados.no_considerar_patrimonio[codigo] ?? 0}
                           disabled={bloqueado || esTotalizador}
@@ -325,10 +347,10 @@ export const IncomeTable = ({
                 {avisos.mostrar_columna_renta_presunta && (
                   <>
                     <td className="py-2 px-1 text-center font-bold text-slate-400 text-sm">
-                      {codigo === CODIGO_GRAN_TOTAL ? null : '−'}
+                      {codigo === CODIGO_GRAN_TOTAL || !mostrarE ? null : '−'}
                     </td>
                     <td className="py-2 px-3 border-r border-slate-100">
-                      {codigo === CODIGO_GRAN_TOTAL ? null : (
+                      {codigo === CODIGO_GRAN_TOTAL || !mostrarE ? null : (
                         <AuditableCellInput
                           value={digitados.factura_renta_presunta[codigo] ?? 0}
                           disabled={bloqueado || esTotalizador}

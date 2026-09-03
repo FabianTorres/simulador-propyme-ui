@@ -184,7 +184,7 @@ export const AuditWorkspace = () => {
 
   const avisoValor1 = simulador.response.ingresos.avisos.valor1_pcalc;
   const avisoValor2 = simulador.response.ingresos.avisos.valor2_pcalc;
-  const requiresModal = avisoValor1 !== undefined && avisoValor2 !== undefined && simulador.patrimonioPersonal === null;
+  const requiresModal = simulador.response.ingresos.avisos.mostrar_columna_patrimonio && avisoValor1 !== undefined && avisoValor2 !== undefined && simulador.patrimonioPersonal === null;
   return (
     <div className="space-y-4">
       {/* ===== 1. BARRA GLOBAL DE CONTROL Y PERSISTENCIA ===== */}
@@ -263,7 +263,7 @@ export const AuditWorkspace = () => {
             ⚡
           </div>
           <div>
-            <h2 className="text-sm font-bold text-white tracking-tight">Página 1 · Ingresos</h2>
+            <h2 className="text-sm font-bold text-white tracking-tight">Página 1 · Ingresos Por Ventas del Año</h2>
 
           </div>
         </div>
@@ -328,8 +328,7 @@ export const AuditWorkspace = () => {
         valor1={avisoValor1 ?? 0}
         valor2={avisoValor2 ?? 0}
         onRespond={(res) => {
-          simulador.setPatrimonioPersonal(res);
-          simulador.setHasChanges(true);
+          simulador.handleRecalcularCaso(res);
         }}
       />
     </div>

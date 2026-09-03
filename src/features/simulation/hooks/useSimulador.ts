@@ -54,7 +54,7 @@ export interface UseSimuladorReturn {
   setShowAllRows: (val: boolean | ((prev: boolean) => boolean)) => void;
   setPatrimonioPersonal: (val: boolean | null) => void;
 
-  handleRecalcularCaso: () => Promise<void>;
+  handleRecalcularCaso: (overridePatrimonio?: boolean) => Promise<void>;
   handleFileUpload: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
   handleRevertir: () => void;
   handleDigitadoChange: (
@@ -121,12 +121,18 @@ export const useSimulador = (): UseSimuladorReturn => {
     setSelectedField('total_7');
     setRecalcError(null);
   };
-const handleRecalcularCaso = async () => {
+  const handleRecalcularCaso = async (overridePatrimonio?: boolean) => {
     debugLog('1. Boton clickeado correctamente!');
 
     if (isRecalculating) {
       debugLog('Cancelado: Ya estaba recalculando.');
       return;
+    }
+
+    // Si viene un override, se aplica directamente para cerrar el modal
+    // inmediatamente sin depender del ciclo de renderizado de React.
+    if (overridePatrimonio !== undefined) {
+      setPatrimonioPersonal(overridePatrimonio);
     }
 
     debugLog('2. Paso el bloqueo, preparando el payload...');
@@ -140,7 +146,7 @@ const handleRecalcularCaso = async () => {
       const payload: SimulacionGlobalRequest = {
         at: '2025',
         modulo: 'ingresos_14d1',
-        patrimonio_personal: patrimonioPersonal,
+        patrimonio_personal: overridePatrimonio !== undefined ? overridePatrimonio : patrimonioPersonal,
         mostrar_formulas: true,
         vectores: vectores,
         externos: {
