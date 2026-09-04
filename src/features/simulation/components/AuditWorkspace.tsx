@@ -82,9 +82,15 @@ const trazabilidadDesdeBackend = (
     ? 'ingresos_ano'
     : key.startsWith('adeudados_')
       ? 'ingresos_adeudados_at_anterior'
-      : key.startsWith('percibido_')
-        ? 'monto_ingreso_percibido'
-        : 'monto_ingreso_percibido';
+      : key.startsWith('noPerc_')
+        ? 'monto_no_percibido'
+        : key.startsWith('patrimonio_')
+          ? 'no_considerar_patrimonio'
+          : key.startsWith('presunta_')
+            ? 'factura_renta_presunta'
+            : key.startsWith('percibido_')
+              ? 'monto_ingreso_percibido'
+              : 'monto_ingreso_percibido';
   const inspector = fila.inspectores?.[llaveInspector] as BackendInspector;
   const meta = FILA_META[fila.codigo];
   return {
@@ -143,9 +149,15 @@ function construirTrazabilidad(
     ? 'ingresos_ano'
     : key.startsWith('adeudados_')
       ? 'ingresos_adeudados_at_anterior'
-      : key.startsWith('percibido_')
-        ? 'monto_ingreso_percibido'
-        : undefined;
+      : key.startsWith('noPerc_')
+        ? 'monto_no_percibido'
+        : key.startsWith('patrimonio_')
+          ? 'no_considerar_patrimonio'
+          : key.startsWith('presunta_')
+            ? 'factura_renta_presunta'
+            : key.startsWith('percibido_')
+              ? 'monto_ingreso_percibido'
+              : undefined;
   const celdaInspector = llaveInspector != null ? fila.inspectores?.[llaveInspector] : undefined;
   if (celdaInspector) {
     return trazabilidadDesdeBackend(key, fila, seccion);
@@ -294,16 +306,12 @@ export const AuditWorkspace = () => {
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] overflow-hidden">
         {/* Banner avisos de bienes raices */}
         {simulador.response.ingresos.avisos.aviso_arriendos_bienes_raices && (
-          <div className="mx-4 mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3">
-            <span className="mt-0.5 w-6 h-6 shrink-0 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold text-xs">
-              ⚠
+          <div className="mx-4 mt-4 bg-cyan-50 border border-cyan-200 rounded-xl px-4 py-3 flex items-start gap-3 shadow-2xs">
+            <span className="mt-0.5 w-6 h-6 shrink-0 rounded-lg bg-cyan-500/20 text-cyan-700 flex items-center justify-center font-bold text-xs font-serif">
+              i
             </span>
-            <div className="text-xs text-amber-900 leading-relaxed">
-              <strong className="font-bold">Posible duplicacion de ingresos:</strong>{' '}
-              Si el ingreso proveniente del arrendamiento de bienes raices se encuentra
-              facturado e incluido en items anteriores de ingresos, corresponderia rebajarlo
-              en "Ingresos percibidos provenientes de arriendos de bienes raices" para no
-              duplicar dicho ingreso (Linea 7.15).
+            <div className="text-xs text-cyan-900 leading-relaxed font-medium">
+              Si el ingreso proveniente del arrendamiento de bienes raíces se encuentra facturado e incluido en ítems anteriores de ingresos, correspondería rebajarlas en "Ingresos percibidos provenientes de arriendos de bienes raíces" para no duplicar dicho ingreso.
             </div>
           </div>
         )}

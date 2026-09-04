@@ -62,6 +62,12 @@ export interface FilaIngreso {
   ingresos_adeudados_at_anterior: string;
   /** Columna F — Monto Ingreso Percibido (resultado del backend). */
   monto_ingreso_percibido: string;
+  /** Columna C — Monto No Percibido del Año (Neto), cuando el backend lo entrega (ej. fila 7.12). */
+  monto_no_percibido?: string | null;
+  /** Columna D — No Considerar Patrimonio Personal, cuando el backend lo entrega (ej. fila 7.12). */
+  no_considerar_patrimonio?: string | null;
+  /** Columna E — Facturas de Actividad de Renta Presunta, cuando el backend lo entrega (ej. fila 7.12). */
+  factura_renta_presunta?: string | null;
   /** Diccionario de trazabilidad por celda, enviado por el motor de auditoria. */
   inspectores?: Record<string, BackendInspector>;
 }

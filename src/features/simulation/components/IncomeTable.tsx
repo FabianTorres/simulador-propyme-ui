@@ -31,13 +31,13 @@ const CODIGO_GRAN_TOTAL = '7';
 const CODIGOS_B_EDITABLES = ['7.11', '7.13', '7.14', '7.16', '7.19', '7.20', '7.27'];
 
 /** Filas que contienen campos activos o bloqueados en Columna C */
-const ROWS_CON_COL_C = ['7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '7.8', '7.9', '7.14', '7.15', '7.17', '7.18', '7.20'];
+const ROWS_CON_COL_C = ['7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '7.8', '7.9', '7.12', '7.14', '7.15', '7.17', '7.18', '7.20'];
 
 /** Filas que contienen campos activos o bloqueados en Columna D */
-const ROWS_CON_COL_D = ['7.14', '7.15', '7.17', '7.18'];
+const ROWS_CON_COL_D = ['7.12', '7.14', '7.15', '7.17', '7.18'];
 
 /** Filas que contienen campos activos o bloqueados en Columna E */
-const ROWS_CON_COL_E = ['7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '7.8', '7.9', '7.14', '7.15', '7.17', '7.18'];
+const ROWS_CON_COL_E = ['7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '7.8', '7.9', '7.12', '7.14', '7.15', '7.17', '7.18'];
 
 /** True si el motor propuso montos en la fila (col. B o col. A/H > 0). */
 const filaConValorPropuesto = (fila: FilaIngreso): boolean =>
@@ -198,7 +198,7 @@ export const IncomeTable = ({
           <tr className="bg-slate-950 text-white">
             <th className="py-3 px-3 text-center w-12 border-r border-slate-800 text-[10px] uppercase font-bold tracking-wider text-slate-400">Cód.</th>
             <th className="py-3 px-1 text-center w-8 text-cyan-300 font-black text-sm">·</th>
-            <th className="py-3 px-3 text-left border-r border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-300">Ventas y Servicios Afectos a IVA</th>
+            <th className="py-3 px-3 text-left border-r border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-300 w-[160px]">Ventas y Servicios Afectos a IVA</th>
             <th className="py-3 px-3 text-center w-[130px] border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300">Ingresos percibidos de montos adeudados de AT anterior</th>
             <th className="py-3 px-1 text-center w-6 text-cyan-300 font-black text-sm">+</th>
             <th className="py-3 px-3 text-center w-[130px] border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300">Ingresos del año (Neto)</th>
@@ -239,6 +239,9 @@ export const IncomeTable = ({
             const bloqueadoC = bloqueado || esTotalizador || codigo === '7.8';
             const meta = FILA_META[codigo];
             const percibido = parseNumero(fila.monto_ingreso_percibido);
+            const noPercBackend = parseNumero(fila.monto_no_percibido);
+            const patrimBackend = parseNumero(fila.no_considerar_patrimonio);
+            const presuntaBackend = parseNumero(fila.factura_renta_presunta);
             const mostrarTooltip7_10 = codigo === '7.10' && avisos.aviso_montos_propuestos_7_10;
 
             return (
@@ -255,9 +258,15 @@ export const IncomeTable = ({
                 <td className="py-2 px-1 text-center font-mono text-xs text-cyan-700">{meta?.signo ?? ''}</td>
 
                 {/* Ventas y Servicios Afectos a IVA */}
-                <td className="py-2 px-3 border-r border-slate-100">
-                  <span className={`text-xs ${esTotalizador ? 'font-bold text-slate-950' : 'text-slate-700'}`}>{NOMBRES_OFICIALES_INGRESOS[codigo] ?? fila.concepto}</span>
-                  {mostrarTooltip7_10 && <TooltipPropuesta7_10 />}
+                <td className="py-2 px-3 border-r border-slate-100 max-w-[160px]">
+                  <div className="flex items-center">
+                    <span
+                      className={`text-xs truncate block w-full ${esTotalizador ? 'font-bold text-slate-950' : 'text-slate-700'}`}
+                      title={NOMBRES_OFICIALES_INGRESOS[codigo] ?? fila.concepto}
+                    >
+                      {NOMBRES_OFICIALES_INGRESOS[codigo] ?? fila.concepto}
+                    </span>
+                  </div>
                 </td>
 
                 {/* Col. A/H — Ingresos percibidos de montos adeudados de AT anterior */}
@@ -294,14 +303,19 @@ export const IncomeTable = ({
                       {formatMonto(netoBackend)}
                     </button>
                   ) : (
-                    <AuditableCellInput
-                      value={digitados.ingresos_ano[codigo] ?? netoBackend}
-                      disabled={!esEditableB}
-                      isPropuesta={!esEditableB}
-                      traceKey={`neto_${codigo}`}
-                      onChange={(v) => onDigitadoChange('ingresos_ano', codigo, v)}
-                      onOpenInspector={onOpenInspector}
-                    />
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex-1">
+                        <AuditableCellInput
+                          value={digitados.ingresos_ano[codigo] ?? netoBackend}
+                          disabled={!esEditableB}
+                          isPropuesta={!esEditableB}
+                          traceKey={`neto_${codigo}`}
+                          onChange={(v) => onDigitadoChange('ingresos_ano', codigo, v)}
+                          onOpenInspector={onOpenInspector}
+                        />
+                      </div>
+                      {mostrarTooltip7_10 && <TooltipPropuesta7_10 />}
+                    </div>
                   )}
                 </td>
 
@@ -312,7 +326,15 @@ export const IncomeTable = ({
 
                 {/* Col. C — Monto No Percibido del Año (Neto) */}
                 <td className="py-2 px-3 border-r border-slate-100">
-                  {codigo === CODIGO_GRAN_TOTAL || !mostrarC ? null : (
+                  {codigo === CODIGO_GRAN_TOTAL || !mostrarC ? null : esTotalizador ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenInspector(`noPerc_${codigo}`)}
+                      className="w-full text-center font-mono text-xs font-bold text-slate-950 hover:text-indigo-700 cursor-pointer"
+                    >
+                      {formatMonto(noPercBackend)}
+                    </button>
+                  ) : (
                     <AuditableCellInput
                       value={digitados.monto_no_percibido[codigo] ?? 0}
                       disabled={bloqueadoC}
@@ -330,7 +352,15 @@ export const IncomeTable = ({
                       {codigo === CODIGO_GRAN_TOTAL || !mostrarD ? null : '−'}
                     </td>
                     <td className="py-2 px-3 border-r border-slate-100">
-                      {codigo === CODIGO_GRAN_TOTAL || !mostrarD ? null : (
+                      {codigo === CODIGO_GRAN_TOTAL || !mostrarD ? null : esTotalizador ? (
+                        <button
+                          type="button"
+                          onClick={() => onOpenInspector(`patrimonio_${codigo}`)}
+                          className="w-full text-center font-mono text-xs font-bold text-slate-950 hover:text-indigo-700 cursor-pointer"
+                        >
+                          {formatMonto(patrimBackend)}
+                        </button>
+                      ) : (
                         <AuditableCellInput
                           value={digitados.no_considerar_patrimonio[codigo] ?? 0}
                           disabled={bloqueado || esTotalizador}
@@ -350,7 +380,15 @@ export const IncomeTable = ({
                       {codigo === CODIGO_GRAN_TOTAL || !mostrarE ? null : '−'}
                     </td>
                     <td className="py-2 px-3 border-r border-slate-100">
-                      {codigo === CODIGO_GRAN_TOTAL || !mostrarE ? null : (
+                      {codigo === CODIGO_GRAN_TOTAL || !mostrarE ? null : esTotalizador ? (
+                        <button
+                          type="button"
+                          onClick={() => onOpenInspector(`presunta_${codigo}`)}
+                          className="w-full text-center font-mono text-xs font-bold text-slate-950 hover:text-indigo-700 cursor-pointer"
+                        >
+                          {formatMonto(presuntaBackend)}
+                        </button>
+                      ) : (
                         <AuditableCellInput
                           value={digitados.factura_renta_presunta[codigo] ?? 0}
                           disabled={bloqueado || esTotalizador}
