@@ -7,18 +7,27 @@
  * Uso recomendado:
  *   import { IncomeTable, crearRequestInicial, recalcularCaso } from '@/features/simulation';
  */
-export { IncomeTable } from './components/IncomeTable';
-export { AuditWorkspace } from './components/AuditWorkspace';
-export { FormulaInspector } from './components/FormulaInspector';
+export { SimulationShell } from './core/components/SimulationShell';
+export { IncomeTable } from './pages/ingresos/IncomeTable';
+export { IngresosPage } from './pages/ingresos/IngresosPage';
+export { FormulaInspector } from './core/components/FormulaInspector';
 export { crearRequestInicial, obtenerRespuestaInicial, recalcularCaso, SIMULADOR_ENDPOINT } from './api/simuladorApi';
-export { FILA_META, NOMBRES_OFICIALES_INGRESOS } from './data/incomeCatalog';
-export type { FilaMeta } from './data/incomeCatalog';
+export { FILA_META, NOMBRES_OFICIALES_INGRESOS } from './pages/ingresos/data/incomeCatalog';
+export type { FilaMeta } from './pages/ingresos/data/incomeCatalog';
 export type {
   DigitadosIngresos,
   FilaIngreso,
   AvisosIngresos,
   IngresosResponseData,
+} from './pages/ingresos/types/ingresos';
+export type {
   SimulacionGlobalRequest,
   SimulacionGlobalResponse,
-} from './types/ingresos';
-export type { FieldTraceability, IntermediateFactor } from './types/inspector';
+  DigitadosGlobal,
+} from './core/types/global';
+export type {
+  FieldTraceability,
+  IntermediateFactor,
+  BackendInspector,
+  BackendVariableUsada,
+} from './core/types/inspector';

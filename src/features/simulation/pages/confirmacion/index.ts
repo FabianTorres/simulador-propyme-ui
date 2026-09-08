@@ -1,0 +1,1 @@
+export { ConfirmacionPage } from './ConfirmacionPage';

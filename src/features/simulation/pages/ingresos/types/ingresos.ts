@@ -1,14 +1,4 @@
-/**
- * Contratos de API — Página 1 (Ingresos) · Simulador Propyme
- *
- * El frontend es una "Dumb UI": los montos calculados los entrega el
- * backend (FastAPI). Estas interfaces describen el *payload* del POST
- * `/api/v1/simulador/ingresos` y la respuesta normalizada que consume
- * la grilla de Auditoría.
- *
- * Convención: estructuras en inglés, conceptos de negocio tributario en
- * castellano (mismo criterio que el resto del repo).
- */
+import type { BackendInspector } from '../../../core/types/inspector';
 
 /** Valores digitados por el usuario en la Página 1 (estado "sucio"). */
 export interface DigitadosIngresos {
@@ -17,36 +7,6 @@ export interface DigitadosIngresos {
   factura_renta_presunta: Record<string, number>;
   ingresos_ano: Record<string, number>;
   ingresos_adeudados_at_anterior?: Record<string, number>;
-}
-
-/** Variable usada por el motor de auditoria para trazar una formula. */
-export interface BackendVariableUsada {
-  nombre: string;
-  valor: string;
-  origen: string;
-}
-
-/** Trazabilidad matematica devuelta por el motor de auditoria (Caja de Cristal). */
-export interface BackendInspector {
-  valor: string;
-  literal: string;
-  evaluado: string;
-  pasos: string[];
-  variables_usadas: BackendVariableUsada[];
-}
-
-/** Payload global del Orquestador (unifica todos los modulos). */
-export interface SimulacionGlobalRequest {
-  at: string;
-  modulo: string;
-  patrimonio_personal: boolean | null;
-  /** Flag para solicitar al motor la trazabilidad de formulas reales. */
-  mostrar_formulas?: boolean;
-  externos: Record<string, number>;
-  vectores: Record<string, number>;
-  digitados: {
-    ingresos: DigitadosIngresos;
-  };
 }
 
 /** Fila normalizada de la tabla de Ingresos devuelta por el backend. */
@@ -85,9 +45,4 @@ export interface AvisosIngresos {
 export interface IngresosResponseData {
   filas: FilaIngreso[];
   avisos: AvisosIngresos;
-}
-
-/** Respuesta normalizada de POST /api/v1/simulador/calcular (Orquestador Global). */
-export interface SimulacionGlobalResponse {
-  ingresos: IngresosResponseData;
 }

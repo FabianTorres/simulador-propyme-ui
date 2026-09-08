@@ -8,12 +8,12 @@
  * limpio y permitir que los mocks crezcan con futuras paginas sin ensuciar
  * el modulo de API.
  */
-import type { FilaIngreso, SimulacionGlobalRequest, SimulacionGlobalResponse } from '../types/ingresos';
+import type { FilaIngreso } from '../pages/ingresos/types/ingresos';
+import type { SimulacionGlobalRequest, SimulacionGlobalResponse } from '../core/types/global';
 
 /** Request inicial — valores digitados por defecto de la maqueta. */
 export const crearRequestInicial = (): SimulacionGlobalRequest => ({
   at: '2025',
-  modulo: 'ingresos_14d1',
   patrimonio_personal: false,
   externos: { Calc4064: 0, Calc4075: 0 },
   vectores: {

@@ -1,5 +1,5 @@
 import type { FieldTraceability } from '../types/inspector';
-import { formatMonto } from '../../../utils/parsers';
+import { formatMonto } from '../../../../utils/parsers';
 
 interface FormulaInspectorProps {
   trace: FieldTraceability | null;

@@ -5,7 +5,7 @@
  * handlers via props desde el hook useSimulador.
  */
 import type { ChangeEvent } from 'react';
-import { RUTS_POR_DEFECTO } from '../hooks/useSimulador';
+import { RUTS_POR_DEFECTO } from '../data/ruts';
 
 export interface GlobalControlBarProps {
   hasChanges: boolean;

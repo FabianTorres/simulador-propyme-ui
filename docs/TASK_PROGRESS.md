@@ -6,18 +6,24 @@
 - **Backend:** Motor determinista FastAPI en `http://localhost:8002` (Página 1 lista al 100%).
 - **Paleta de Diseño:** Base Pizarra Frío (`#eef2f6`), Índigo/Cobalto (`indigo-600`), Cyan (`cyan-400`), Cabeceras `slate-950`.
 - **Estructura Modular Activa:**
-  - `src/features/simulation/types/ingresos.ts`: Contratos de request y response (Orquestador Global).
+  - `src/features/simulation/core/types/global.ts`: Contratos globales (request/response del Orquestador).
+  - `src/features/simulation/core/types/inspector.ts`: Tipos de trazabilidad (BackendInspector, FieldTraceability).
+  - `src/features/simulation/core/data/pages.config.ts`: Metadata de las 8 paginas del SII.
+  - `src/features/simulation/core/data/ruts.ts`: RUTs por defecto del selector.
+  - `src/features/simulation/core/hooks/useSimulador.ts`: Orquestador global de estado (response, digitados, handlers).
+  - `src/features/simulation/core/utils/excelImport.ts`: Parseo de Excel (hojas Vectores y Calculadora).
+  - `src/features/simulation/core/components/SimulationShell.tsx`: Shell (barra + tabs + pagina activa + inspector + modal).
+  - `src/features/simulation/core/components/GlobalControlBar.tsx`: Barra de control superior (Dumb UI).
+  - `src/features/simulation/core/components/FormulaInspector.tsx`: Inspector de trazabilidad (Caja de Cristal).
+  - `src/features/simulation/core/components/AuditableCellInput.tsx`: Input de celda reutilizable con micro-boton fx.
+  - `src/features/simulation/core/components/PageTabs.tsx` / `PagePlaceholder.tsx`: Navegacion y estado temporal de paginas.
+  - `src/features/simulation/pages/ingresos/`: Modulo Ingresos (IngresosPage, IncomeTable, PatrimonioModal, trazabilidad, types, data).
+  - `src/features/simulation/pages/{egresos,retiros,...}/`: Stubs de las 7 paginas restantes.
   - `src/features/simulation/api/simuladorApi.ts`: Cliente HTTP contra `/api/v1/simulador/calcular`.
-  - `src/features/simulation/__mocks__/ingresosMock.ts`: Fixtures de maqueta QA extraídos del API.
-  - `src/features/simulation/hooks/useSimulador.ts`: Custom hook con toda la lógica de estado (response, digitados, handlers).
-  - `src/features/simulation/data/incomeCatalog.ts`: Metadatos estáticos y textos legales de las 24 partidas.
-  - `src/features/simulation/components/GlobalControlBar.tsx`: Barra de control superior (RUT, toggles 14D1/CRRP, botones). Componente presentacional puro.
-  - `src/features/simulation/components/IncomeTable.tsx`: Tabla densa con operadores (+, −, =), bloqueos y micro-fx.
-  - `src/features/simulation/components/AuditWorkspace.tsx`: Orquestador presentacional (invoca hook, renderiza barra + tabla + inspector).
-  - `src/features/simulation/components/FormulaInspector.tsx`: Inspector de trazabilidad (Caja de Cristal).
-  - `src/features/simulation/index.ts`: Barrel export del módulo.
+  - `src/features/simulation/__mocks__/ingresosMock.ts`: Fixtures de maqueta QA extraidos del API.
+  - `src/features/simulation/index.ts`: Barrel export del modulo.
   - `src/utils/parsers.ts`: Utilidades compartidas (`parseNumero`, `formatMonto`, `debugLog`).
-  - `src/components/layout/Navbar.tsx`: Barra de navegación superior.
+  - `src/components/layout/Navbar.tsx`: Barra de navegacion superior.
 - **Dependencias eliminadas:** `ag-grid-community`, `ag-grid-react` (no se usaban, ~1.2 MB ahorrados).
 - **Assets eliminados:** `App.css`, `react.svg`, `vite.svg` (scaffold de Vite sin uso).
 
@@ -58,6 +64,7 @@
  - [x] Auto-recalculo silencioso al responder el modal de Patrimonio Personal: `handleRecalcularCaso` ahora acepta un parametro opcional `overridePatrimonio` que actualiza el estado directamente y se envia inmediatamente al backend, evitando depender del ciclo asincrono de React y del boton "Recalcular Caso".
  - [x] Visibilidad normativa de columnas C, D y E en `IncomeTable.tsx`: se agregaron listas maestras `ROWS_CON_COL_C/D/E` basadas en `docs/Pagina_1_14D1.md`. Las celdas de filas no incluidas se renderizan vacias (no bloqueadas), y la fila 7.8 tiene la Columna C bloqueada permanentemente segun la normativa.
  - [x] Consumo de totales calculados del backend para la fila totalizadora 7.12: se agregaron `monto_no_percibido`, `no_considerar_patrimonio` y `factura_renta_presunta` a `FilaIngreso`. La fila 7.12 renderiza botones de texto plano con los valores del backend y abre el inspector. El trazador (`AuditWorkspace.tsx`) mapea las nuevas llaves `noPerc_`, `patrimonio_` y `presunta_` a sus inspectores correspondientes.
+ - [x] Reestructuracion del modulo `simulation` en `core/` (contratos, hook, shell y UI compartida) + `pages/` (ingresos completo + 7 stubs). Se elimino `modulo` del request, `14D1` se mantiene en `externos` y `CRRP` pasa a booleano. Se extrajeron `AuditableCellInput`, `parseExcelWorkbook` y la trazabilidad a modulos dedicados. Sin cambios visuales ni funcionales.
  - [x] Sistema de versionamiento real: `__APP_VERSION__` se lee desde `package.json` y se inyecta via `define` en `vite.config.ts`. Se reemplazo el string quemado `v2026.1` en `Navbar.tsx` por la variable global, y se declaro `__APP_VERSION__` en `src/vite-env.d.ts` para que TypeScript la reconozca.
 
 ### Fase 2: Página 2 (Egresos)

@@ -1,0 +1,1 @@
+export { EgresosPage } from './EgresosPage';

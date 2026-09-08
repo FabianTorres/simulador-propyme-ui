@@ -1,5 +1,5 @@
 import { Navbar } from './components/layout/Navbar';
-import { AuditWorkspace } from './features/simulation/components/AuditWorkspace';
+import { SimulationShell } from './features/simulation';
 
 export default function App() {
   return (
@@ -7,7 +7,7 @@ export default function App() {
       <Navbar />
 
       <main className="flex-1 p-6 flex flex-col gap-5 max-w-7xl w-full mx-auto">
-        <AuditWorkspace />
+        <SimulationShell />
       </main>
     </div>
   );

@@ -62,18 +62,15 @@ simulador-propyme-ui/
 │   │       │   └── ingresosMock.ts   # Fixtures y datos de prueba desacoplados de la API.
 │   │       ├── api/
 │   │       │   └── simuladorApi.ts   # Cliente HTTP (fetch). Conecta con POST /api/v1/simulador/calcular.
-│   │       ├── components/           # Componentes UI específicos de la simulación (Dumb UI).
-│   │       │   ├── AuditWorkspace.tsx # Orquestador presentacional (esqueleto, tabs y layout principal).
-│   │       │   ├── FormulaInspector.tsx # Cajón lateral (Slide-Over) para auditar reglas y fórmulas.
-│   │       │   ├── GlobalControlBar.tsx # Barra superior (RUT, Toggles 14D1/CRRP, Botones de acción).
-│   │       │   └── IncomeTable.tsx   # Grilla densa de ingresos. Muestra cálculos y captura digitados.
-│   │       ├── data/
-│   │       │   └── incomeCatalog.ts  # Diccionarios estáticos (glosas oficiales del SII, metadatos).
-│   │       ├── hooks/
-│   │       │   └── useSimulador.ts   # EL CEREBRO: Custom hook que maneja el estado global, vectores y handlers.
-│   │       ├── types/
-│   │       │   ├── ingresos.ts       # Interfaces de TypeScript para payloads de red (Request/Response).
-│   │       │   └── inspector.ts      # Interfaces para la trazabilidad de la Caja de Cristal.
+│   │       ├── core/                 # Núcleo compartido (agnóstico de página).
+│   │       │   ├── components/       # Shell, barra, inspector, input de celda y tabs.
+│   │       │   ├── data/             # Metadata de páginas y RUTs por defecto.
+│   │       │   ├── hooks/            # useSimulador (orquestador global).
+│   │       │   ├── types/            # Contratos globales y de trazabilidad.
+│   │       │   └── utils/            # Parseo de Excel.
+│   │       ├── pages/                # Feature slices por página del SII.
+│   │       │   ├── ingresos/         # Página 1 completa (tabla, modal, trazabilidad, types, data).
+│   │       │   └── {egresos,retiros,...}/ # Stubs de las 7 páginas restantes.
 │   │       └── index.ts              # Barrel export para centralizar las importaciones del módulo.
 │   ├── lib/                          # Librerías de terceros configuradas (ej. clientes axios).
 │   ├── routes/                       # Configuración de enrutamiento (React Router).

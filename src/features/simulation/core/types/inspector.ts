@@ -1,3 +1,19 @@
+/** Variable usada por el motor de auditoria para trazar una formula. */
+export interface BackendVariableUsada {
+  nombre: string;
+  valor: string;
+  origen: string;
+}
+
+/** Trazabilidad matematica devuelta por el motor de auditoria (Caja de Cristal). */
+export interface BackendInspector {
+  valor: string;
+  literal: string;
+  evaluado: string;
+  pasos: string[];
+  variables_usadas: BackendVariableUsada[];
+}
+
 export interface IntermediateFactor {
   name: string;
   source: string; // Origen del dato segun el motor (ej. "vector", "digitado", "externo", "calculado")

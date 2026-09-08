@@ -1,4 +1,4 @@
-import { formatMonto } from '../../../utils/parsers';
+import { formatMonto } from '../../../../utils/parsers';
 
 interface PatrimonioModalProps {
   isOpen: boolean;

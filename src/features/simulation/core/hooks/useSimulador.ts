@@ -4,30 +4,23 @@
  *
  * Dumb UI: este hook es el unico lugar donde reside el estado local
  * (response, digitados, flags de UI) y las funciones que lo manipulan.
- * Los componentes de presentacion (AuditWorkspace, GlobalControlBar,
- * IncomeTable) solo consumen lo que este hook expone.  Cero calculos
- * tributarios; todo viene pre-calculado del backend (FastAPI).
+ * Los componentes de presentacion solo consumen lo que este hook expone.
+ * Cero calculos tributarios; todo viene pre-calculado del backend (FastAPI).
  */
 import { useState, type ChangeEvent } from 'react';
-import * as XLSX from 'xlsx';
 import {
   crearRequestInicial,
   obtenerRespuestaInicial,
   recalcularCaso,
-} from '../api/simuladorApi';
+} from '../../api/simuladorApi';
 import type {
-  DigitadosIngresos,
   SimulacionGlobalRequest,
   SimulacionGlobalResponse,
-} from '../types/ingresos';
-import { parseNumero, debugLog } from '../../../utils/parsers';
-
-/** RUTs disponibles por defecto en el selector de la barra superior. */
-export const RUTS_POR_DEFECTO = [
-  '76.123.456-7',
-  '77.987.654-K',
-  '78.111.222-3',
-];
+} from '../types/global';
+import type { DigitadosIngresos } from '../../pages/ingresos/types/ingresos';
+import { RUTS_POR_DEFECTO } from '../data/ruts';
+import { parseExcelWorkbook } from '../utils/excelImport';
+import { debugLog } from '../../../../utils/parsers';
 
 export interface UseSimuladorReturn {
   /* ── Estados ──────────────────────────────────────────── */
@@ -90,8 +83,6 @@ export const useSimulador = (): UseSimuladorReturn => {
   const [vectores, setVectores] = useState<Record<string, number>>({});
   const [externos, setExternos] = useState<Record<string, number>>({});
 
-  /* Handlers -------------------------------------------------------------- */
-
   const openInspector = (fieldKey: string) => {
     setSelectedField(fieldKey);
     setIsInspectorOpen(true);
@@ -121,6 +112,7 @@ export const useSimulador = (): UseSimuladorReturn => {
     setSelectedField('total_7');
     setRecalcError(null);
   };
+
   const handleRecalcularCaso = async (overridePatrimonio?: boolean) => {
     debugLog('1. Boton clickeado correctamente!');
 
@@ -140,19 +132,16 @@ export const useSimulador = (): UseSimuladorReturn => {
     setRecalcError(null);
 
     try {
-      // Se construye el payload a partir de los estados actuales (no de
-      // crearRequestInicial) para preservar vectores y externos importados.
-      // Se solicita explicitamente la trazabilidad del motor de auditoria.
       const payload: SimulacionGlobalRequest = {
         at: '2025',
-        modulo: 'ingresos_14d1',
-        patrimonio_personal: overridePatrimonio !== undefined ? overridePatrimonio : patrimonioPersonal,
+        patrimonio_personal:
+          overridePatrimonio !== undefined ? overridePatrimonio : patrimonioPersonal,
         mostrar_formulas: true,
         vectores: vectores,
         externos: {
           ...externos,
           '14D1': atributo14D1 ? 1 : 0,
-          CRRP: atributoCRRP ? 1 : 0,
+          CRRP: atributoCRRP,
         },
         digitados: { ingresos: digitados },
       };
@@ -183,45 +172,11 @@ export const useSimulador = (): UseSimuladorReturn => {
     setRecalcError(null);
 
     try {
-      const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+      const { vectores: vectoresParseados, externos: calculadoraParseada, rut: rutImportado } =
+        await parseExcelWorkbook(file);
 
-      const hojaVectores = workbook.Sheets['Vectores'];
-      const hojaCalculadora = workbook.Sheets['Calculadora'];
-
-      if (!hojaVectores || !hojaCalculadora) {
-        throw new Error('El archivo no contiene las hojas "Vectores" y/o "Calculadora".');
-      }
-
-      const vectoresParseados = XLSX.utils
-        .sheet_to_json<{ Id: string; Valor: string | number }>(hojaVectores)
-        .reduce<Record<string, number>>((acumulador, fila) => {
-          acumulador[fila.Id] = parseNumero(fila.Valor);
-          return acumulador;
-        }, {});
-
-      const calculadoraParseada = XLSX.utils
-        .sheet_to_json<{ Id: string; Valor: string | number }>(hojaCalculadora)
-        .reduce<Record<string, number>>((acumulador, fila) => {
-          acumulador[fila.Id] = parseNumero(fila.Valor);
-          return acumulador;
-        }, {});
-
-      // Se persisten en el estado para que futuras recalculaciones no los pierdan.
       setVectores(vectoresParseados);
       setExternos(calculadoraParseada);
-
-      const rutImportado = workbook.SheetNames.reduce<string | null>(
-        (encontrado, nombreHoja) => {
-          if (encontrado) return encontrado;
-          const filas = XLSX.utils.sheet_to_json<Record<string, unknown>>(
-            workbook.Sheets[nombreHoja],
-            { defval: null }
-          );
-          const fila = filas.find((f) => f.RUT != null && String(f.RUT).trim() !== '');
-          return fila ? String(fila.RUT).trim() : null;
-        },
-        null
-      );
 
       if (rutImportado) {
         debugLog('[Excel P1] RUT importado:', rutImportado);
@@ -238,11 +193,14 @@ export const useSimulador = (): UseSimuladorReturn => {
 
       const payload: SimulacionGlobalRequest = {
         at: '2025',
-        modulo: 'ingresos_14d1',
         patrimonio_personal: patrimonioPersonal,
         mostrar_formulas: true,
         vectores: vectoresParseados,
-        externos: { ...calculadoraParseada, '14D1': atributo14D1 ? 1 : 0, CRRP: atributoCRRP ? 1 : 0 },
+        externos: {
+          ...calculadoraParseada,
+          '14D1': atributo14D1 ? 1 : 0,
+          CRRP: atributoCRRP,
+        },
         digitados: { ingresos: digitadosVacios },
       };
 
@@ -252,7 +210,9 @@ export const useSimulador = (): UseSimuladorReturn => {
       setHasChanges(false);
     } catch (error) {
       console.error('Fallo la importacion del Excel:', error);
-      setRecalcError('No fue posible importar el archivo Excel. Verifica que contenga las hojas "Vectores" y "Calculadora".');
+      setRecalcError(
+        'No fue posible importar el archivo Excel. Verifica que contenga las hojas "Vectores" y "Calculadora".'
+      );
     } finally {
       setIsImporting(false);
       input.value = '';
@@ -287,3 +247,4 @@ export const useSimulador = (): UseSimuladorReturn => {
     openInspector,
   };
 };
+

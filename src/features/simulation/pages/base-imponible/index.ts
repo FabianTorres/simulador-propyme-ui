@@ -1,0 +1,1 @@
+export { BaseImponiblePage } from './BaseImponiblePage';

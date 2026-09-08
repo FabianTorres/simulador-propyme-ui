@@ -2,7 +2,7 @@
  * API — Página 1 (Ingresos) · Simulador Propyme
  *
  * RESPONSABILIDAD (solo transporte de datos):
- *  - Montar el POST /api/v1/simulador/ingresos contra FastAPI.
+ *  - Montar el POST /api/v1/simulador/calcular contra FastAPI.
  *  - Mientras el backend no esté desplegado, resolver la petición con un
  *    FIXTURE ESTÁTICO: captura de la respuesta que produce el motor Python.
  *
@@ -15,7 +15,7 @@
 import type {
   SimulacionGlobalRequest,
   SimulacionGlobalResponse,
-} from '../types/ingresos';
+} from '../core/types/global';
 
 /**
  * URL del endpoint unificado del Orquestador Global (FastAPI / Docker).
