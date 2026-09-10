@@ -16,8 +16,10 @@ import {
 import type {
   SimulacionGlobalRequest,
   SimulacionGlobalResponse,
+  DigitadosGlobal,
+  PaginaKey,
 } from '../types/global';
-import type { DigitadosIngresos } from '../../pages/ingresos/types/ingresos';
+import { crearDigitadosEgresosVacios } from '../../__mocks__/egresosMock';
 import { RUTS_POR_DEFECTO } from '../data/ruts';
 import { parseExcelWorkbook } from '../utils/excelImport';
 import { debugLog } from '../../../../utils/parsers';
@@ -25,7 +27,7 @@ import { debugLog } from '../../../../utils/parsers';
 export interface UseSimuladorReturn {
   /* ── Estados ──────────────────────────────────────────── */
   response: SimulacionGlobalResponse;
-  digitados: DigitadosIngresos;
+  digitados: DigitadosGlobal;
   hasChanges: boolean;
   isRecalculating: boolean;
   isImporting: boolean;
@@ -35,7 +37,6 @@ export interface UseSimuladorReturn {
   recalcError: string | null;
   selectedField: string;
   isInspectorOpen: boolean;
-  showAllRows: boolean;
   patrimonioPersonal: boolean | null;
 
   /* ── Acciones ─────────────────────────────────────────── */
@@ -44,14 +45,14 @@ export interface UseSimuladorReturn {
   setAtributoCRRP: (val: boolean | ((prev: boolean) => boolean)) => void;
   setHasChanges: (val: boolean) => void;
   setIsInspectorOpen: (val: boolean) => void;
-  setShowAllRows: (val: boolean | ((prev: boolean) => boolean)) => void;
   setPatrimonioPersonal: (val: boolean | null) => void;
 
   handleRecalcularCaso: (overridePatrimonio?: boolean) => Promise<void>;
   handleFileUpload: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
   handleRevertir: () => void;
   handleDigitadoChange: (
-    seccion: keyof DigitadosIngresos,
+    page: PaginaKey,
+    seccion: string,
     codigo: string,
     valor: number
   ) => void;
@@ -62,10 +63,14 @@ export const useSimulador = (): UseSimuladorReturn => {
   const [response, setResponse] = useState<SimulacionGlobalResponse>(() =>
     obtenerRespuestaInicial()
   );
-  const [digitados, setDigitados] = useState<DigitadosIngresos>(() => ({
-    ...crearRequestInicial().digitados.ingresos,
-    ingresos_adeudados_at_anterior: {},
-  }));
+  const [digitados, setDigitados] = useState<DigitadosGlobal>(() => {
+    const inicial = crearRequestInicial().digitados;
+    return {
+      ...inicial,
+      ingresos: { ...inicial.ingresos, ingresos_adeudados_at_anterior: {} },
+      egresos: { ...inicial.egresos, egresos_adeudados_at_anterior: {} },
+    };
+  });
   const [hasChanges, setHasChanges] = useState<boolean>(false);
   const [isRecalculating, setIsRecalculating] = useState<boolean>(false);
   const [isImporting, setIsImporting] = useState<boolean>(false);
@@ -75,7 +80,6 @@ export const useSimulador = (): UseSimuladorReturn => {
   const [recalcError, setRecalcError] = useState<string | null>(null);
   const [selectedField, setSelectedField] = useState<string>('total_7');
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false);
-  const [showAllRows, setShowAllRows] = useState<boolean>(false);
   const [patrimonioPersonal, setPatrimonioPersonal] = useState<boolean | null>(null);
 
   // Memoria persistente de vectores y externos importados desde Excel
@@ -89,26 +93,29 @@ export const useSimulador = (): UseSimuladorReturn => {
   };
 
   const handleDigitadoChange = (
-    seccion: keyof DigitadosIngresos,
+    page: PaginaKey,
+    seccion: string,
     codigo: string,
     valor: number
   ) => {
     setHasChanges(true);
     setRecalcError(null);
-    setDigitados((prev) => ({
-      ...prev,
-      [seccion]: { ...prev[seccion], [codigo]: valor },
-    }));
+    setDigitados((prev) => {
+      const pagina = prev[page] as unknown as Record<string, Record<string, number>>;
+      return {
+        ...prev,
+        [page]: { ...pagina, [seccion]: { ...pagina[seccion], [codigo]: valor } },
+      };
+    });
   };
 
   const handleRevertir = () => {
     setResponse(obtenerRespuestaInicial());
-    setDigitados(crearRequestInicial().digitados.ingresos);
+    setDigitados(crearRequestInicial().digitados);
     setVectores({});
     setExternos({});
     setPatrimonioPersonal(null);
     setHasChanges(false);
-    setShowAllRows(false);
     setSelectedField('total_7');
     setRecalcError(null);
   };
@@ -143,7 +150,7 @@ export const useSimulador = (): UseSimuladorReturn => {
           '14D1': atributo14D1 ? 1 : 0,
           CRRP: atributoCRRP,
         },
-        digitados: { ingresos: digitados },
+        digitados: digitados,
       };
       debugLog('3. Payload armado, a punto de disparar el fetch a FastAPI:', payload);
 
@@ -183,12 +190,15 @@ export const useSimulador = (): UseSimuladorReturn => {
         setRutSeleccionado(rutImportado);
       }
 
-      const digitadosVacios: DigitadosIngresos = {
-        monto_no_percibido: {},
-        no_considerar_patrimonio: {},
-        factura_renta_presunta: {},
-        ingresos_ano: {},
-        ingresos_adeudados_at_anterior: {},
+      const digitadosVacios: DigitadosGlobal = {
+        ingresos: {
+          monto_no_percibido: {},
+          no_considerar_patrimonio: {},
+          factura_renta_presunta: {},
+          ingresos_ano: {},
+          ingresos_adeudados_at_anterior: {},
+        },
+        egresos: crearDigitadosEgresosVacios(),
       };
 
       const payload: SimulacionGlobalRequest = {
@@ -201,7 +211,7 @@ export const useSimulador = (): UseSimuladorReturn => {
           '14D1': atributo14D1 ? 1 : 0,
           CRRP: atributoCRRP,
         },
-        digitados: { ingresos: digitadosVacios },
+        digitados: digitadosVacios,
       };
 
       const next = await recalcularCaso(payload);
@@ -231,14 +241,12 @@ export const useSimulador = (): UseSimuladorReturn => {
     recalcError,
     selectedField,
     isInspectorOpen,
-    showAllRows,
     patrimonioPersonal,
     setRutSeleccionado,
     setAtributo14D1,
     setAtributoCRRP,
     setHasChanges,
     setIsInspectorOpen,
-    setShowAllRows,
     setPatrimonioPersonal,
     handleRecalcularCaso,
     handleFileUpload,

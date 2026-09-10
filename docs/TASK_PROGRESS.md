@@ -69,9 +69,15 @@
 
 ### Fase 2: Página 2 (Egresos)
 
-- [ ] Definición de contratos y tipos.
-- [ ] Integración con endpoint backend de Egresos.
-- [ ] Implementación de vista tabular y reglas de bloqueo.
+- [x] Definición de contratos y tipos (`egresos.ts`, `DigitadosGlobal`, `PaginaKey`).
+- [x] Catálogo de metadatos QA (`egresosCatalog.ts`).
+- [x] Mock de maqueta (`egresosMock.ts`) e integración al mock global.
+- [x] Componente `EgresosTable.tsx` con reglas UI (bloqueo B === 0, columnas C/D/E condicionales, col H editable por montos AT-1, fila 8.31 bloqueada).
+- [x] `EgresosPage.tsx` con banner de arriendos pagados y toggle local por pagina.
+- [x] Trazabilidad de celdas (`trazabilidad.ts`) y despacho por pagina en `SimulationShell`.
+- [x] Orquestador global (`useSimulador`) con `DigitadosGlobal` y `handleDigitadoChange(page, seccion, codigo, valor)`.
+- [ ] Integración con endpoint backend de Egresos (pendiente validacion del motor real).
+- [ ] Tooltips de las filas 8.14 / 8.15 / 8.17 / 8.27 (se veran despues).
 
 ### Fase 3: Páginas 3 a 8
 

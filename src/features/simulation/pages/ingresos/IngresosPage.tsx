@@ -1,11 +1,10 @@
+import { useState } from 'react';
 import { IncomeTable } from './IncomeTable';
 import type { DigitadosIngresos, IngresosResponseData } from './types/ingresos';
 
 interface IngresosPageProps {
   response: IngresosResponseData;
   digitados: DigitadosIngresos;
-  showAllRows: boolean;
-  onToggleShowAllRows: () => void;
   onDigitadoChange: (
     seccion: keyof DigitadosIngresos,
     codigo: string,
@@ -18,11 +17,11 @@ interface IngresosPageProps {
 export const IngresosPage = ({
   response,
   digitados,
-  showAllRows,
-  onToggleShowAllRows,
   onDigitadoChange,
   onOpenInspector,
 }: IngresosPageProps) => {
+  const [showAllRows, setShowAllRows] = useState(false);
+
   return (
     <>
       {/* ===== Panel de Cabecera de la Pagina ===== */}
@@ -38,7 +37,7 @@ export const IngresosPage = ({
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
-            onClick={onToggleShowAllRows}
+            onClick={() => setShowAllRows((v) => !v)}
             aria-pressed={showAllRows}
             className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
               showAllRows

@@ -10,6 +10,7 @@
  */
 import type { FilaIngreso } from '../pages/ingresos/types/ingresos';
 import type { SimulacionGlobalRequest, SimulacionGlobalResponse } from '../core/types/global';
+import { MOCK_RESPUESTA_EGRESOS, crearDigitadosEgresosVacios } from './egresosMock';
 
 /** Request inicial — valores digitados por defecto de la maqueta. */
 export const crearRequestInicial = (): SimulacionGlobalRequest => ({
@@ -27,6 +28,7 @@ export const crearRequestInicial = (): SimulacionGlobalRequest => ({
       factura_renta_presunta: {},
       ingresos_ano: { '7.11': 150000 },
     },
+    egresos: crearDigitadosEgresosVacios(),
   },
 });
 /**
@@ -73,5 +75,6 @@ export const MOCK_RESPUESTA_SII: SimulacionGlobalResponse = {
       mostrar_columna_renta_presunta: false,
     },
   },
+  egresos: MOCK_RESPUESTA_EGRESOS,
 };
 

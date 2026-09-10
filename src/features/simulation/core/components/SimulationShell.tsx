@@ -3,9 +3,11 @@ import { GlobalControlBar } from './GlobalControlBar';
 import { FormulaInspector } from './FormulaInspector';
 import { PageTabs } from './PageTabs';
 import { useSimulador } from '../hooks/useSimulador';
+import { PagePlaceholder } from './PagePlaceholder';
 import { IngresosPage } from '../../pages/ingresos/IngresosPage';
 import { PatrimonioModal } from '../../pages/ingresos/PatrimonioModal';
 import { construirTrazabilidad } from '../../pages/ingresos/trazabilidad';
+import { construirTrazabilidadEgresos } from '../../pages/egresos/trazabilidad';
 import { EgresosPage } from '../../pages/egresos/EgresosPage';
 import { RetirosPage } from '../../pages/retiros/RetirosPage';
 import { DeterminacionRliPage } from '../../pages/determinacion-rli/DeterminacionRliPage';
@@ -24,7 +26,10 @@ import { ConfirmacionPage } from '../../pages/confirmacion/ConfirmacionPage';
 export const SimulationShell = () => {
   const [activePageId, setActivePageId] = useState<number>(1);
   const simulador = useSimulador();
-  const activeTrace = construirTrazabilidad(simulador.selectedField, simulador.response, simulador.digitados);
+  const activeTrace =
+    activePageId === 2
+      ? construirTrazabilidadEgresos(simulador.selectedField, simulador.response, simulador.digitados.egresos)
+      : construirTrazabilidad(simulador.selectedField, simulador.response, simulador.digitados.ingresos);
 
   const avisoValor1 = simulador.response.ingresos.avisos.valor1_pcalc;
   const avisoValor2 = simulador.response.ingresos.avisos.valor2_pcalc;
@@ -40,15 +45,26 @@ export const SimulationShell = () => {
         return (
           <IngresosPage
             response={simulador.response.ingresos}
-            digitados={simulador.digitados}
-            showAllRows={simulador.showAllRows}
-            onToggleShowAllRows={() => simulador.setShowAllRows((v) => !v)}
-            onDigitadoChange={simulador.handleDigitadoChange}
+            digitados={simulador.digitados.ingresos}
+            onDigitadoChange={(seccion, codigo, valor) =>
+              simulador.handleDigitadoChange('ingresos', seccion, codigo, valor)
+            }
             onOpenInspector={simulador.openInspector}
           />
         );
       case 2:
-        return <EgresosPage />;
+        return simulador.response.egresos ? (
+          <EgresosPage
+            response={simulador.response.egresos}
+            digitados={simulador.digitados.egresos}
+            onDigitadoChange={(seccion, codigo, valor) =>
+              simulador.handleDigitadoChange('egresos', seccion, codigo, valor)
+            }
+            onOpenInspector={simulador.openInspector}
+          />
+        ) : (
+          <PagePlaceholder title="Página 2 · Egresos (sin datos)" />
+        );
       case 3:
         return <RetirosPage />;
       case 4:
