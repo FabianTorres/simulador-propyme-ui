@@ -13,6 +13,10 @@ export { IngresosPage } from './pages/ingresos/IngresosPage';
 export { EgresosPage } from './pages/egresos/EgresosPage';
 export { EgresosTable } from './pages/egresos/EgresosTable';
 export { FILA_META_EGRESOS, NOMBRES_OFICIALES_EGRESOS } from './pages/egresos/data/egresosCatalog';
+export { RetirosPage } from './pages/retiros/RetirosPage';
+export { RetirosTable } from './pages/retiros/RetirosTable';
+export { COLUMNAS_RETIROS, GRUPOS_RETIROS } from './pages/retiros/data/retirosCatalog';
+export { AuditableTextCellInput } from './core/components/AuditableTextCellInput';
 export { FormulaInspector } from './core/components/FormulaInspector';
 export { crearRequestInicial, obtenerRespuestaInicial, recalcularCaso, SIMULADOR_ENDPOINT } from './api/simuladorApi';
 export { FILA_META, NOMBRES_OFICIALES_INGRESOS } from './pages/ingresos/data/incomeCatalog';
@@ -35,6 +39,18 @@ export type {
   DigitadosGlobal,
   PaginaKey,
 } from './core/types/global';
+export type {
+  DigitadosRetiros,
+  RetiroFilaInput,
+  RetiroFila,
+  CalculoRetiros,
+  DerivadaRetiro,
+  TotalesRetiros,
+  AvisosRetiros,
+  RreTemporal,
+  RetirosResponseData,
+} from './pages/retiros/types/retiros';
+export { crearRetiroFilaVacia } from './pages/retiros/types/retiros';
 export type {
   FieldTraceability,
   IntermediateFactor,

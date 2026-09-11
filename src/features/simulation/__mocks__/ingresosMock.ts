@@ -11,10 +11,11 @@
 import type { FilaIngreso } from '../pages/ingresos/types/ingresos';
 import type { SimulacionGlobalRequest, SimulacionGlobalResponse } from '../core/types/global';
 import { MOCK_RESPUESTA_EGRESOS, crearDigitadosEgresosVacios } from './egresosMock';
+import { crearDigitadosRetirosVacios, crearRetirosVacio, crearRreVacio } from './retirosMock';
 
 /** Request inicial — valores digitados por defecto de la maqueta. */
 export const crearRequestInicial = (): SimulacionGlobalRequest => ({
-  at: '2025',
+  at: '2026',
   patrimonio_personal: false,
   externos: { Calc4064: 0, Calc4075: 0 },
   vectores: {
@@ -29,6 +30,8 @@ export const crearRequestInicial = (): SimulacionGlobalRequest => ({
       ingresos_ano: { '7.11': 150000 },
     },
     egresos: crearDigitadosEgresosVacios(),
+    retiros: crearDigitadosRetirosVacios(),
+    rre: crearRreVacio(),
   },
 });
 /**
@@ -76,5 +79,6 @@ export const MOCK_RESPUESTA_SII: SimulacionGlobalResponse = {
     },
   },
   egresos: MOCK_RESPUESTA_EGRESOS,
+  retiros: crearRetirosVacio(),
 };
 

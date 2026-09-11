@@ -78,3 +78,14 @@ export const NOMBRES_OFICIALES_EGRESOS: Record<string, string> = {
   '8.29': 'Gastos aceptados por donaciones',
   '8': 'TOTAL EGRESOS',
 };
+
+/**
+ * Orden canonico de las filas de la Pagina 2 segun docs/Pagina_2_Egresos.md.
+ * Se usa en la tabla para no depender del orden en que el backend entregue
+ * el array `filas`.
+ */
+export const ORDEN_FILAS_EGRESOS: string[] = [
+  '8.1', '8.2', '8.3', '8.4', '8.6', '8.7', '8.8', '8.9', '8.11', '8.31',
+  '8.5', '8.10', '8.12', '8.13', '8.14', '8.15', '8.17', '8.18', '8.19', '8.20',
+  '8.21', '8.22', '8.23', '8.24', '8.25', '8.26', '8.27', '8.28', '8.29', '8',
+];

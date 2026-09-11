@@ -14,7 +14,7 @@
  */
 import { useMemo } from 'react';
 import { parseNumero, formatMonto } from '../../../../utils/parsers';
-import { FILA_META_EGRESOS, NOMBRES_OFICIALES_EGRESOS } from './data/egresosCatalog';
+import { FILA_META_EGRESOS, NOMBRES_OFICIALES_EGRESOS, ORDEN_FILAS_EGRESOS } from './data/egresosCatalog';
 import type { DigitadosEgresos, EgresosResponseData, FilaEgreso } from './types/egresos';
 import { AuditableCellInput } from '../../core/components/AuditableCellInput';
 
@@ -56,6 +56,20 @@ const filaConValorPropuesto = (fila: FilaEgreso): boolean =>
   parseNumero(fila.egresos_ano) > 0 ||
   parseNumero(fila.egresos_adeudados_at_anterior) > 0;
 
+/** Posicion de cada codigo segun el orden canonico del documento. */
+const ORDEN_INDEX: Record<string, number> = ORDEN_FILAS_EGRESOS.reduce(
+  (acc, codigo, idx) => ({ ...acc, [codigo]: idx }),
+  {} as Record<string, number>
+);
+
+/** Ordena las filas segun docs/Pagina_2_Egresos.md (estable y sin mutar). */
+const ordenarFilasEgresos = (filas: FilaEgreso[]): FilaEgreso[] =>
+  [...filas].sort((a, b) => {
+    const ia = ORDEN_INDEX[a.codigo] ?? Number.MAX_SAFE_INTEGER;
+    const ib = ORDEN_INDEX[b.codigo] ?? Number.MAX_SAFE_INTEGER;
+    return ia - ib;
+  });
+
 export interface EgresosTableProps {
   /** Respuesta normalizada del backend (montos ya calculados por FastAPI). */
   response: EgresosResponseData;
@@ -87,10 +101,13 @@ export const EgresosTable = ({
   const filasVisibles = useMemo(() => {
     const filasDatos = filas.filter((f) => !CODIGOS_TOTALIZADORES.includes(f.codigo));
     const hayPropuestas = filasDatos.some(filaConValorPropuesto);
-    if (showAllRows || !hayPropuestas) return filas;
-    return filas.filter(
-      (f) => CODIGOS_TOTALIZADORES.includes(f.codigo) || filaConValorPropuesto(f)
-    );
+    const visibles =
+      showAllRows || !hayPropuestas
+        ? filas
+        : filas.filter(
+            (f) => CODIGOS_TOTALIZADORES.includes(f.codigo) || filaConValorPropuesto(f)
+          );
+    return ordenarFilasEgresos(visibles);
   }, [filas, showAllRows]);
 
   return (
@@ -128,27 +145,67 @@ export const EgresosTable = ({
           <tr className="bg-slate-950 text-white">
             <th className="py-3 px-3 text-center w-12 border-r border-slate-800 text-[10px] uppercase font-bold tracking-wider text-slate-400">Cód.</th>
             <th className="py-3 px-1 text-center w-8 text-cyan-300 font-black text-sm">·</th>
-            <th className="py-3 px-3 text-left border-r border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-300 w-[160px]">Compras y Servicios</th>
-            <th className="py-3 px-3 text-center w-[130px] border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300">Monto adeudados en el ejercicio anterior y pagados</th>
+            <th
+              className="py-3 px-3 text-left border-r border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-300 w-[160px]"
+              title="Compras y Servicios"
+            >
+              Compras y Servicios
+            </th>
+            <th
+              className="py-3 px-3 text-center w-[130px] border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300"
+              title="Monto adeudados en el ejercicio anterior y pagados en el ejercicio actual"
+            >
+              Monto Adeudado
+            </th>
             <th className="py-3 px-1 text-center w-6 text-cyan-300 font-black text-sm">+</th>
-            <th className="py-3 px-3 text-center w-[130px] border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300">Egresos del año</th>
+            <th
+              className="py-3 px-3 text-center w-[130px] border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300"
+              title="Egresos del año"
+            >
+              Egresos
+            </th>
             <th className="py-3 px-1 text-center w-6 text-cyan-300 font-black text-sm">−</th>
-            <th className="py-3 px-3 text-center w-[130px] border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300">No Pagadas del año</th>
+            <th
+              className="py-3 px-3 text-center w-[130px] border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300"
+              title="No Pagadas del año"
+            >
+              Monto Adeudado
+            </th>
             {avisos.mostrar_columna_patrimonio && (
               <>
                 <th className="py-3 px-1 text-center w-6 text-cyan-300 font-black text-sm">−</th>
-                <th className="py-3 px-2 text-center w-[110px] border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300">No considerar es de Patrimonio Personal</th>
+                <th
+                  className="py-3 px-2 text-center w-[110px] border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300"
+                  title="No considerar es de Patrimonio Personal"
+                >
+                  No Considerar es de Patrimonio Personal
+                </th>
               </>
             )}
             {avisos.mostrar_columna_renta_presunta && (
               <>
                 <th className="py-3 px-1 text-center w-6 text-cyan-300 font-black text-sm">−</th>
-                <th className="py-3 px-3 text-center w-[130px] border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300">Facturas de Actividad de Renta Presunta</th>
+                <th
+                  className="py-3 px-3 text-center w-[130px] border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300"
+                  title="Facturas de Actividad de Renta Presunta"
+                >
+                  Facturas de Actividad de Renta Presunta
+                </th>
               </>
             )}
             <th className="py-3 px-1 text-center w-6 text-cyan-300 font-black text-sm">=</th>
-            <th className="py-3 px-3 text-center w-[140px] border-r border-slate-800 bg-indigo-950 text-[10px] uppercase tracking-wider text-indigo-100">Monto Compras o Egresos Pagados</th>
-            <th className="py-3 px-3 text-center w-[80px] text-[10px] uppercase tracking-wider text-slate-400">Código F22</th>
+            <th
+              className="py-3 px-3 text-center w-[140px] border-r border-slate-800 bg-indigo-950 text-[10px] uppercase tracking-wider text-indigo-100"
+              title="Monto Compras o Egresos Pagados"
+            >
+              Total
+            </th>
+            <th
+              className="py-3 px-3 text-center w-[80px] text-[10px] uppercase tracking-wider text-slate-400"
+              title="Código F22"
+            >
+              Código F22
+            </th>
           </tr>
         </thead>
         <tbody>

@@ -9,6 +9,7 @@ import { PatrimonioModal } from '../../pages/ingresos/PatrimonioModal';
 import { construirTrazabilidad } from '../../pages/ingresos/trazabilidad';
 import { construirTrazabilidadEgresos } from '../../pages/egresos/trazabilidad';
 import { EgresosPage } from '../../pages/egresos/EgresosPage';
+import { construirTrazabilidadRetiros } from '../../pages/retiros/trazabilidad';
 import { RetirosPage } from '../../pages/retiros/RetirosPage';
 import { DeterminacionRliPage } from '../../pages/determinacion-rli/DeterminacionRliPage';
 import { BaseImponiblePage } from '../../pages/base-imponible/BaseImponiblePage';
@@ -29,7 +30,9 @@ export const SimulationShell = () => {
   const activeTrace =
     activePageId === 2
       ? construirTrazabilidadEgresos(simulador.selectedField, simulador.response, simulador.digitados.egresos)
-      : construirTrazabilidad(simulador.selectedField, simulador.response, simulador.digitados.ingresos);
+      : activePageId === 3
+        ? construirTrazabilidadRetiros(simulador.selectedField, simulador.response, simulador.digitados.retiros)
+        : construirTrazabilidad(simulador.selectedField, simulador.response, simulador.digitados.ingresos);
 
   const avisoValor1 = simulador.response.ingresos.avisos.valor1_pcalc;
   const avisoValor2 = simulador.response.ingresos.avisos.valor2_pcalc;
@@ -66,7 +69,16 @@ export const SimulationShell = () => {
           <PagePlaceholder title="Página 2 · Egresos (sin datos)" />
         );
       case 3:
-        return <RetirosPage />;
+        return simulador.response.retiros ? (
+          <RetirosPage
+            response={simulador.response.retiros}
+            digitados={simulador.digitados.retiros}
+            onFilasChange={simulador.handleRetirosFilasChange}
+            onOpenInspector={simulador.openInspector}
+          />
+        ) : (
+          <PagePlaceholder title="Página 3 · Retiros (sin datos)" />
+        );
       case 4:
         return <DeterminacionRliPage />;
       case 5:

@@ -20,6 +20,8 @@ import type {
   PaginaKey,
 } from '../types/global';
 import { crearDigitadosEgresosVacios } from '../../__mocks__/egresosMock';
+import { crearDigitadosRetirosVacios, crearRreVacio } from '../../__mocks__/retirosMock';
+import type { RetiroFilaInput } from '../../pages/retiros/types/retiros';
 import { RUTS_POR_DEFECTO } from '../data/ruts';
 import { parseExcelWorkbook } from '../utils/excelImport';
 import { debugLog } from '../../../../utils/parsers';
@@ -56,6 +58,8 @@ export interface UseSimuladorReturn {
     codigo: string,
     valor: number
   ) => void;
+  /** Reemplaza el arreglo completo de filas de Retiros (estado "sucio"). */
+  handleRetirosFilasChange: (filas: RetiroFilaInput[]) => void;
   openInspector: (fieldKey: string) => void;
 }
 
@@ -109,6 +113,13 @@ export const useSimulador = (): UseSimuladorReturn => {
     });
   };
 
+  /** Reemplaza el arreglo completo de filas de Retiros (estado "sucio"). */
+  const handleRetirosFilasChange = (filas: RetiroFilaInput[]) => {
+    setHasChanges(true);
+    setRecalcError(null);
+    setDigitados((prev) => ({ ...prev, retiros: { ...prev.retiros, filas } }));
+  };
+
   const handleRevertir = () => {
     setResponse(obtenerRespuestaInicial());
     setDigitados(crearRequestInicial().digitados);
@@ -140,7 +151,7 @@ export const useSimulador = (): UseSimuladorReturn => {
 
     try {
       const payload: SimulacionGlobalRequest = {
-        at: '2025',
+        at: '2026',
         patrimonio_personal:
           overridePatrimonio !== undefined ? overridePatrimonio : patrimonioPersonal,
         mostrar_formulas: true,
@@ -199,10 +210,12 @@ export const useSimulador = (): UseSimuladorReturn => {
           ingresos_adeudados_at_anterior: {},
         },
         egresos: crearDigitadosEgresosVacios(),
+        retiros: crearDigitadosRetirosVacios(),
+        rre: crearRreVacio(),
       };
 
       const payload: SimulacionGlobalRequest = {
-        at: '2025',
+        at: '2026',
         patrimonio_personal: patrimonioPersonal,
         mostrar_formulas: true,
         vectores: vectoresParseados,
@@ -252,6 +265,7 @@ export const useSimulador = (): UseSimuladorReturn => {
     handleFileUpload,
     handleRevertir,
     handleDigitadoChange,
+    handleRetirosFilasChange,
     openInspector,
   };
 };

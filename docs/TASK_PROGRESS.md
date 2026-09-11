@@ -66,6 +66,7 @@
  - [x] Consumo de totales calculados del backend para la fila totalizadora 7.12: se agregaron `monto_no_percibido`, `no_considerar_patrimonio` y `factura_renta_presunta` a `FilaIngreso`. La fila 7.12 renderiza botones de texto plano con los valores del backend y abre el inspector. El trazador (`AuditWorkspace.tsx`) mapea las nuevas llaves `noPerc_`, `patrimonio_` y `presunta_` a sus inspectores correspondientes.
  - [x] Reestructuracion del modulo `simulation` en `core/` (contratos, hook, shell y UI compartida) + `pages/` (ingresos completo + 7 stubs). Se elimino `modulo` del request, `14D1` se mantiene en `externos` y `CRRP` pasa a booleano. Se extrajeron `AuditableCellInput`, `parseExcelWorkbook` y la trazabilidad a modulos dedicados. Sin cambios visuales ni funcionales.
  - [x] Sistema de versionamiento real: `__APP_VERSION__` se lee desde `package.json` y se inyecta via `define` en `vite.config.ts`. Se reemplazo el string quemado `v2026.1` en `Navbar.tsx` por la variable global, y se declaro `__APP_VERSION__` en `src/vite-env.d.ts` para que TypeScript la reconozca.
+ - [x] Ajustes de UI en tabs y encabezados de Egresos: se eliminaron los badges de los botones de navegacion (`PageTabs.tsx` + `pages.config.ts`) dejando solo el nombre corto de cada pagina. Los botones ahora usan ancho flexible (`flex-1`) y se acomodan al viewport (`sm:flex-nowrap`, texto truncado con `truncate`). En `EgresosTable.tsx` los titulos de columnas se alinearon a la web del SII y se agregaron tooltips con los nombres originales del documento `docs/Pagina_2_Egresos.md`.
 
 ### Fase 2: Página 2 (Egresos)
 
@@ -76,12 +77,26 @@
 - [x] `EgresosPage.tsx` con banner de arriendos pagados y toggle local por pagina.
 - [x] Trazabilidad de celdas (`trazabilidad.ts`) y despacho por pagina en `SimulationShell`.
 - [x] Orquestador global (`useSimulador`) con `DigitadosGlobal` y `handleDigitadoChange(page, seccion, codigo, valor)`.
+- [x] Orden canonico de filas (`ORDEN_FILAS_EGRESOS` en `egresosCatalog.ts` + ordenamiento en `EgresosTable.tsx` via `ordenarFilasEgresos`) para seguir el orden de `docs/Pagina_2_Egresos.md` sin depender del orden en que el backend entregue `filas`.
 - [ ] Integración con endpoint backend de Egresos (pendiente validacion del motor real).
 - [ ] Tooltips de las filas 8.14 / 8.15 / 8.17 / 8.27 (se veran despues).
 
-### Fase 3: Páginas 3 a 8
+### Fase 3: Página 3 (Retiros)
 
-- [ ] Retiros, RLI, Base Imponible, KPT, RRE, Resumen y Envío.
+- [x] Definición de contratos y tipos (`pages/retiros/types/retiros.ts`): `RetiroFilaInput`, `RetiroFila`, `CalculoRetiros`, `DerivadaRetiro`, `TotalesRetiros`, `AvisosRetiros`, `DigitadosRetiros`, `RreTemporal`, `RetirosResponseData`.
+- [x] Extensión de contratos globales: `PaginaKey` incluye `'retiros'`; `DigitadosGlobal` agrega `retiros` + `rre`; `SimulacionGlobalResponse` agrega `retiros`.
+- [x] Estado inicial vacío (`__mocks__/retirosMock.ts`): el backend no siembra el RIAC, por lo que `retiros.filas` nace vacío (sin datos demo). Integrado en `crearRequestInicial()` y `MOCK_RESPUESTA_SII`.
+- [x] Orquestador (`useSimulador`): nuevo `handleRetirosFilasChange(filas)` (reemplaza el arreglo y marca estado sucio); `retiros`/`rre` se incluyen en `handleRecalcularCaso`, `handleFileUpload` y `handleRevertir`. El nodo `response.retiros` (con `calculo`/`derivadas`/`totales`) se preserva intacto entre ediciones para no perder los cálculos internos que alimentan al RRE.
+- [x] Cambio de año tributario: `at` paso de `'2025'` a `'2026'` en el payload y en el request inicial (proximo periodo sera `'2027'`).
+- [x] Componente de texto auditable (`core/components/AuditableTextCellInput.tsx`): variante de `AuditableCellInput` para RUT y fechas con mascara `dd/mm/aaaa` y micro-boton `fx`.
+- [x] Catalogo de columnas (`pages/retiros/data/retirosCatalog.ts`): 12 columnas A-L (RET1-RET12) con grupos "Retiros efectivos del ejercicio" y "Devolucion de capital", tooltip de RET2.
+- [x] Tabla dinamica (`RetirosTable.tsx`): encabezado de 3 niveles, filas agregables ("Nuevo"), duplicables (mantiene RET1) y eliminables; todas las celdas editables segun decision de maqueta (sin RIAC).
+- [x] Pagina (`RetirosPage.tsx`): panel de cabecera, franja resumen auditable ([1044], [1045], RET30, RET15 con `fx`) y banner de error de topes.
+- [x] Trazabilidad (`pages/retiros/trazabilidad.ts`): mapeo de `ret_1044`, `ret_1045`, `ret30`, `ret15`, `ret14_<rut>`, `validacionFila_<i>_f1/f2` a los `inspectores` del backend.
+- [x] Despacho por pagina en `SimulationShell` (case 3 + trazabilidad activa por pagina) y barrel exports.
+- [ ] Validacion final contra el backend real de Retiros (maqueta QA).
+- [ ] Paginas 4 a 8 (RLI, Base Imponible, KPT, RRE, Resumen y Envio).
+
 
 
 
