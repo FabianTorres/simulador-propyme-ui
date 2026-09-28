@@ -55,3 +55,69 @@ export const COLUMNAS_RETIROS: ColumnaRetiro[] = [
   { letra: 'K', codigo: 'RET11', campo: 'f2_isfut_h', label: 'Monto ISFUT_H', grupo: 'devolucion', tipo: 'numero' },
   { letra: 'L', codigo: 'RET12', campo: 'f2_isfut_a', label: 'Monto ISFUT_A', grupo: 'devolucion', tipo: 'numero' },
 ];
+
+/**
+ * Encabezados canonicos de la hoja Excel "Retiros" (misma subida que
+ * Vectores/Calculadora). Cada fila de la hoja equivale a un objeto
+ * FilaRetiroDigitada (1 socio + 1 fecha, sin agrupar por RUT).
+ */
+export const HEADERS_EXCEL_RETIROS: string[] = [
+  'RUT',
+  'Usufructuario',
+  'Acciones',
+  'F1_Fecha',
+  'F1_Monto',
+  'F1_ISFUT_H',
+  'F1_ISFUT_A',
+  'Saldo',
+  'F2_Fecha',
+  'F2_Monto',
+  'F2_ISFUT_H',
+  'F2_ISFUT_A',
+];
+
+/**
+ * Mapeo de encabezado normalizado (minusculas, sin tildes ni separadores)
+ * hacia el campo del contrato. Incluye alias RET1..RET12 por compatibilidad.
+ */
+export const MAPEO_EXCEL_RETIROS: Record<string, keyof RetiroFilaInput> = {
+  rut: 'rut',
+  ret1: 'rut',
+  usufructuario: 'usufructuario',
+  ret2: 'usufructuario',
+  acciones: 'acciones',
+  ret3: 'acciones',
+  cantidadacciones: 'acciones',
+  f1fecha: 'f1_fecha',
+  fecharetiro: 'f1_fecha',
+  ret4: 'f1_fecha',
+  f1monto: 'f1_monto',
+  montoretiro: 'f1_monto',
+  ret5: 'f1_monto',
+  f1isfuth: 'f1_isfut_h',
+  montoisfuth: 'f1_isfut_h',
+  ret6: 'f1_isfut_h',
+  f1isfuta: 'f1_isfut_a',
+  montoisfuta: 'f1_isfut_a',
+  ret7: 'f1_isfut_a',
+  saldo: 'saldo',
+  ret8: 'saldo',
+  saldomontoretiroexceso: 'saldo',
+  f2fecha: 'f2_fecha',
+  fecha: 'f2_fecha',
+  ret9: 'f2_fecha',
+  f2monto: 'f2_monto',
+  monto: 'f2_monto',
+  ret10: 'f2_monto',
+  f2isfuth: 'f2_isfut_h',
+  ret11: 'f2_isfut_h',
+  f2isfuta: 'f2_isfut_a',
+  ret12: 'f2_isfut_a',
+};
+
+/**
+ * Clave de deduplicacion para fusion (rut + fechas). No es regla tributaria,
+ * solo evita duplicar el mismo registro al combinar Excel con digitados.
+ */
+export const claveFilaRetiro = (fila: Pick<RetiroFilaInput, 'rut' | 'f1_fecha' | 'f2_fecha'>): string =>
+  `${fila.rut.trim().toUpperCase()}|${fila.f1_fecha.trim()}|${fila.f2_fecha.trim()}`;

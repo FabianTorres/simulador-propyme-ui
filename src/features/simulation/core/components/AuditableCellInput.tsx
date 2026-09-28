@@ -27,7 +27,7 @@ export const AuditableCellInput = ({
         disabled={disabled}
         min={0}
         onChange={(e) => onChange(parseNumero(e.target.value))}
-        className={`w-full text-center font-mono py-1.5 pl-2 pr-6 border rounded text-xs transition-all disabled:opacity-100 ${
+        className={`w-full min-w-0 text-center font-mono py-1.5 pl-2 pr-6 border rounded text-xs transition-all disabled:opacity-100 ${
           disabled
             ? isPropuesta
               ? 'bg-slate-200/80 border-slate-300 font-bold text-slate-900 cursor-not-allowed shadow-inner'

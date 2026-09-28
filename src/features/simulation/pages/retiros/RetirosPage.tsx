@@ -7,6 +7,7 @@ interface RetirosPageProps {
   digitados: DigitadosRetiros;
   onFilasChange: (filas: RetiroFilaInput[]) => void;
   onOpenInspector: (fieldKey: string) => void;
+  importWarnings?: string[];
 }
 
 /**
@@ -21,6 +22,7 @@ export const RetirosPage = ({
   digitados,
   onFilasChange,
   onOpenInspector,
+  importWarnings = [],
 }: RetirosPageProps) => {
   const { avisos, calculo, totales } = response;
 
@@ -97,6 +99,21 @@ export const RetirosPage = ({
             {!avisos.validacion_1045_ok && (
               <p>El monto ingresado en ISFUT_A (RET7 + RET12) excede el tope [1045].</p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== Aviso de formato de la hoja Retiros ===== */}
+      {importWarnings.length > 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/40 rounded-2xl px-4 py-3 flex items-start gap-3">
+          <span className="mt-0.5 w-5 h-5 shrink-0 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold text-xs">!</span>
+          <div className="text-xs text-amber-900 leading-relaxed flex-1">
+            <p className="font-bold mb-1">Avisos de la hoja Retiros del Excel:</p>
+            <ul className="list-disc pl-4 space-y-0.5">
+              {importWarnings.map((aviso) => (
+                <li key={aviso}>{aviso}</li>
+              ))}
+            </ul>
           </div>
         </div>
       )}

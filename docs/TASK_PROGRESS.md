@@ -3,7 +3,7 @@
 ## 📌 Contexto y Arquitectura Actual
 
 - **Rol:** Frontend Dumb UI en React + Vite + TailwindCSS.
-- **Backend:** Motor determinista FastAPI en `http://localhost:8002` (Página 1 lista al 100%).
+- **Backend:** Motor determinista FastAPI en `http://localhost:8002` (Páginas 1 y 2 validadas al 100% contra backend real).
 - **Paleta de Diseño:** Base Pizarra Frío (`#eef2f6`), Índigo/Cobalto (`indigo-600`), Cyan (`cyan-400`), Cabeceras `slate-950`.
 - **Estructura Modular Activa:**
   - `src/features/simulation/core/types/global.ts`: Contratos globales (request/response del Orquestador).
@@ -31,7 +31,7 @@
 
 ## 🚦 Registro de Fases
 
-### Fase 1: Página 1 (Ingresos)
+### Fase 1: Página 1 (Ingresos) — COMPLETA y VALIDADA con backend real
 
 - [x] Definición de tipos TypeScript (`ingresos.ts`).
 - [x] Cliente API y Mock (`ingresosApi.ts`).
@@ -68,7 +68,7 @@
  - [x] Sistema de versionamiento real: `__APP_VERSION__` se lee desde `package.json` y se inyecta via `define` en `vite.config.ts`. Se reemplazo el string quemado `v2026.1` en `Navbar.tsx` por la variable global, y se declaro `__APP_VERSION__` en `src/vite-env.d.ts` para que TypeScript la reconozca.
  - [x] Ajustes de UI en tabs y encabezados de Egresos: se eliminaron los badges de los botones de navegacion (`PageTabs.tsx` + `pages.config.ts`) dejando solo el nombre corto de cada pagina. Los botones ahora usan ancho flexible (`flex-1`) y se acomodan al viewport (`sm:flex-nowrap`, texto truncado con `truncate`). En `EgresosTable.tsx` los titulos de columnas se alinearon a la web del SII y se agregaron tooltips con los nombres originales del documento `docs/Pagina_2_Egresos.md`.
 
-### Fase 2: Página 2 (Egresos)
+### Fase 2: Página 2 (Egresos) — COMPLETA y VALIDADA con backend real
 
 - [x] Definición de contratos y tipos (`egresos.ts`, `DigitadosGlobal`, `PaginaKey`).
 - [x] Catálogo de metadatos QA (`egresosCatalog.ts`).
@@ -78,7 +78,7 @@
 - [x] Trazabilidad de celdas (`trazabilidad.ts`) y despacho por pagina en `SimulationShell`.
 - [x] Orquestador global (`useSimulador`) con `DigitadosGlobal` y `handleDigitadoChange(page, seccion, codigo, valor)`.
 - [x] Orden canonico de filas (`ORDEN_FILAS_EGRESOS` en `egresosCatalog.ts` + ordenamiento en `EgresosTable.tsx` via `ordenarFilasEgresos`) para seguir el orden de `docs/Pagina_2_Egresos.md` sin depender del orden en que el backend entregue `filas`.
-- [ ] Integración con endpoint backend de Egresos (pendiente validacion del motor real).
+- [x] Integración con endpoint backend de Egresos: validada contra el motor real FastAPI, funcionando bien (probada por el usuario).
 - [ ] Tooltips de las filas 8.14 / 8.15 / 8.17 / 8.27 (se veran despues).
 
 ### Fase 3: Página 3 (Retiros)
@@ -94,6 +94,13 @@
 - [x] Pagina (`RetirosPage.tsx`): panel de cabecera, franja resumen auditable ([1044], [1045], RET30, RET15 con `fx`) y banner de error de topes.
 - [x] Trazabilidad (`pages/retiros/trazabilidad.ts`): mapeo de `ret_1044`, `ret_1045`, `ret30`, `ret15`, `ret14_<rut>`, `validacionFila_<i>_f1/f2` a los `inspectores` del backend.
 - [x] Despacho por pagina en `SimulationShell` (case 3 + trazabilidad activa por pagina) y barrel exports.
+- [x] Carga de socios desde Excel (hoja opcional `Retiros` en la misma subida): `parseExcelWorkbook` mapea filas a `RetiroFilaInput` (`es_registro_nuevo: true`), con `retirosWarnings` de formato. Contrato congelado con backend: lista de filas (1 socio + 1 fecha), sin `rre`, sin calculados.
+- [x] Conflicto Excel vs manual: `pendingImport` en `useSimulador` + `RetirosConflictModal` (Reemplazar/Fusionar por clave `rut|f1_fecha|f2_fecha`/Cancelar). Banner de warnings en `RetirosPage`.
+- [x] Mock de ejemplo `crearDigitadosRetirosEjemplo` (caso 1-9 x2, 2-7, 3-5 del doc).
+- [x] Fix importacion: `0/-/vacio/no/n-a` en Usufructuario se trata como nulo silencioso (sin warning); solo valores realmente invalidos avisan.
+- [x] Fix visual: tabla Retiros con `w-max min-w-full` + `min-w` por columna (RUT 160, montos 148, fechas 136) y scroll horizontal real.
+- [x] Fechas como date picker: `AuditableDateCellInput` (input type=date, modelo dd/mm/aaaa) en F1/F2; `parseFechaExcel` acepta compacto DDMMYYYY (03032025) y serial Excel.
+- [x] Anchos reales con `table-fixed` + `colgroup` (`ANCHOS_COLUMNA` en `RetirosTable.tsx`, unico punto de ajuste); `min-w-0` en inputs auditables para que el contenido no fuerce columnas; encabezados sin `nowrap` (`leading-tight`) para que el texto largo no infle el ancho.
 - [ ] Validacion final contra el backend real de Retiros (maqueta QA).
 - [ ] Paginas 4 a 8 (RLI, Base Imponible, KPT, RRE, Resumen y Envio).
 

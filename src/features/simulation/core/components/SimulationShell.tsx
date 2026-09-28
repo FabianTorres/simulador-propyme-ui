@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { GlobalControlBar } from './GlobalControlBar';
 import { FormulaInspector } from './FormulaInspector';
+import { RetirosConflictModal } from './RetirosConflictModal';
 import { PageTabs } from './PageTabs';
 import { useSimulador } from '../hooks/useSimulador';
 import { PagePlaceholder } from './PagePlaceholder';
@@ -75,6 +76,7 @@ export const SimulationShell = () => {
             digitados={simulador.digitados.retiros}
             onFilasChange={simulador.handleRetirosFilasChange}
             onOpenInspector={simulador.openInspector}
+            importWarnings={simulador.retirosImportWarnings}
           />
         ) : (
           <PagePlaceholder title="Página 3 · Retiros (sin datos)" />
@@ -160,6 +162,16 @@ export const SimulationShell = () => {
         valor2={avisoValor2 ?? 0}
         onRespond={(res) => {
           simulador.handleRecalcularCaso(res);
+        }}
+      />
+
+      {/* ===== 8. Conflicto de importacion de socios (Retiros) ===== */}
+      <RetirosConflictModal
+        isOpen={simulador.retirosConflictOpen}
+        previasCount={simulador.previasRetirosCount}
+        importadasCount={simulador.pendingRetirosCount}
+        onResolve={(modo) => {
+          simulador.resolveRetirosConflict(modo);
         }}
       />
     </div>

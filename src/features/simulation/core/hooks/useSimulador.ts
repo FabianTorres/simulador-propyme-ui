@@ -20,8 +20,9 @@ import type {
   PaginaKey,
 } from '../types/global';
 import { crearDigitadosEgresosVacios } from '../../__mocks__/egresosMock';
-import { crearDigitadosRetirosVacios, crearRreVacio } from '../../__mocks__/retirosMock';
+import { crearRreVacio } from '../../__mocks__/retirosMock';
 import type { RetiroFilaInput } from '../../pages/retiros/types/retiros';
+import { claveFilaRetiro } from '../../pages/retiros/data/retirosCatalog';
 import { RUTS_POR_DEFECTO } from '../data/ruts';
 import { parseExcelWorkbook } from '../utils/excelImport';
 import { debugLog } from '../../../../utils/parsers';
@@ -40,6 +41,11 @@ export interface UseSimuladorReturn {
   selectedField: string;
   isInspectorOpen: boolean;
   patrimonioPersonal: boolean | null;
+  /** Conflicto pendiente entre socios digitados e importados desde Excel. */
+  retirosConflictOpen: boolean;
+  pendingRetirosCount: number;
+  previasRetirosCount: number;
+  retirosImportWarnings: string[];
 
   /* ── Acciones ─────────────────────────────────────────── */
   setRutSeleccionado: (rut: string) => void;
@@ -60,6 +66,8 @@ export interface UseSimuladorReturn {
   ) => void;
   /** Reemplaza el arreglo completo de filas de Retiros (estado "sucio"). */
   handleRetirosFilasChange: (filas: RetiroFilaInput[]) => void;
+  /** Resuelve el conflicto de importacion de socios (reemplazar/fusionar/cancelar). */
+  resolveRetirosConflict: (modo: 'reemplazar' | 'fusionar' | 'cancelar') => Promise<void>;
   openInspector: (fieldKey: string) => void;
 }
 
@@ -90,6 +98,16 @@ export const useSimulador = (): UseSimuladorReturn => {
   // (se preservan entre recalculaciones para evitar amnesia de estado).
   const [vectores, setVectores] = useState<Record<string, number>>({});
   const [externos, setExternos] = useState<Record<string, number>>({});
+
+  // Importacion de Retiros pendiente de resolucion (conflicto Excel vs manual).
+  const [pendingImport, setPendingImport] = useState<{
+    vectores: Record<string, number>;
+    externos: Record<string, number>;
+    rut: string | null;
+    filas: RetiroFilaInput[];
+    warnings: string[];
+  } | null>(null);
+  const [retirosImportWarnings, setRetirosImportWarnings] = useState<string[]>([]);
 
   const openInspector = (fieldKey: string) => {
     setSelectedField(fieldKey);
@@ -129,6 +147,8 @@ export const useSimulador = (): UseSimuladorReturn => {
     setHasChanges(false);
     setSelectedField('total_7');
     setRecalcError(null);
+    setPendingImport(null);
+    setRetirosImportWarnings([]);
   };
 
   const handleRecalcularCaso = async (overridePatrimonio?: boolean) => {
@@ -181,6 +201,54 @@ export const useSimulador = (): UseSimuladorReturn => {
     }
   };
 
+  const aplicarImportacion = async (
+    vectoresParseados: Record<string, number>,
+    calculadoraParseada: Record<string, number>,
+    rutImportado: string | null,
+    filasRetiros: RetiroFilaInput[],
+    warnings: string[]
+  ) => {
+    setVectores(vectoresParseados);
+    setExternos(calculadoraParseada);
+
+    if (rutImportado) {
+      debugLog('[Excel P1] RUT importado:', rutImportado);
+      setRutSeleccionado(rutImportado);
+    }
+
+    const digitadosVacios: DigitadosGlobal = {
+      ingresos: {
+        monto_no_percibido: {},
+        no_considerar_patrimonio: {},
+        factura_renta_presunta: {},
+        ingresos_ano: {},
+        ingresos_adeudados_at_anterior: {},
+      },
+      egresos: crearDigitadosEgresosVacios(),
+      retiros: { filas: filasRetiros },
+      rre: crearRreVacio(),
+    };
+
+    const payload: SimulacionGlobalRequest = {
+      at: '2026',
+      patrimonio_personal: patrimonioPersonal,
+      mostrar_formulas: true,
+      vectores: vectoresParseados,
+      externos: {
+        ...calculadoraParseada,
+        '14D1': atributo14D1 ? 1 : 0,
+        CRRP: atributoCRRP,
+      },
+      digitados: digitadosVacios,
+    };
+
+    const next = await recalcularCaso(payload);
+    setResponse(next);
+    setDigitados(digitadosVacios);
+    setRetirosImportWarnings(warnings);
+    setHasChanges(false);
+  };
+
   const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || isImporting) return;
@@ -190,47 +258,24 @@ export const useSimulador = (): UseSimuladorReturn => {
     setRecalcError(null);
 
     try {
-      const { vectores: vectoresParseados, externos: calculadoraParseada, rut: rutImportado } =
+      const { vectores: vectoresParseados, externos: calculadoraParseada, rut: rutImportado, retiros: retirosImportados, retirosWarnings } =
         await parseExcelWorkbook(file);
 
-      setVectores(vectoresParseados);
-      setExternos(calculadoraParseada);
-
-      if (rutImportado) {
-        debugLog('[Excel P1] RUT importado:', rutImportado);
-        setRutSeleccionado(rutImportado);
+      const previas = digitados.retiros.filas;
+      // Conflicto: hay socios a mano y el Excel tambien trae socios.
+      // Se difiere el recalculo hasta que el usuario elija como combinar.
+      if (previas.length > 0 && retirosImportados.length > 0) {
+        setPendingImport({
+          vectores: vectoresParseados,
+          externos: calculadoraParseada,
+          rut: rutImportado,
+          filas: retirosImportados,
+          warnings: retirosWarnings,
+        });
+        return;
       }
 
-      const digitadosVacios: DigitadosGlobal = {
-        ingresos: {
-          monto_no_percibido: {},
-          no_considerar_patrimonio: {},
-          factura_renta_presunta: {},
-          ingresos_ano: {},
-          ingresos_adeudados_at_anterior: {},
-        },
-        egresos: crearDigitadosEgresosVacios(),
-        retiros: crearDigitadosRetirosVacios(),
-        rre: crearRreVacio(),
-      };
-
-      const payload: SimulacionGlobalRequest = {
-        at: '2026',
-        patrimonio_personal: patrimonioPersonal,
-        mostrar_formulas: true,
-        vectores: vectoresParseados,
-        externos: {
-          ...calculadoraParseada,
-          '14D1': atributo14D1 ? 1 : 0,
-          CRRP: atributoCRRP,
-        },
-        digitados: digitadosVacios,
-      };
-
-      const next = await recalcularCaso(payload);
-      setResponse(next);
-      setDigitados(digitadosVacios);
-      setHasChanges(false);
+      await aplicarImportacion(vectoresParseados, calculadoraParseada, rutImportado, retirosImportados, retirosWarnings);
     } catch (error) {
       console.error('Fallo la importacion del Excel:', error);
       setRecalcError(
@@ -239,6 +284,47 @@ export const useSimulador = (): UseSimuladorReturn => {
     } finally {
       setIsImporting(false);
       input.value = '';
+    }
+  };
+
+  /**
+   * Resuelve el conflicto de socios: reemplaza, fusiona (deduplicando por
+   * rut + fechas, gana el Excel) o cancela (descarta la importacion).
+   */
+  const resolveRetirosConflict = async (modo: 'reemplazar' | 'fusionar' | 'cancelar') => {
+    if (!pendingImport) return;
+    if (modo === 'cancelar') {
+      setPendingImport(null);
+      return;
+    }
+
+    const previas = digitados.retiros.filas;
+    let filas: RetiroFilaInput[];
+    if (modo === 'reemplazar') {
+      filas = pendingImport.filas;
+    } else {
+      const vistas = new Map<string, RetiroFilaInput>();
+      previas.forEach((fila) => {
+        vistas.set(claveFilaRetiro(fila), fila);
+      });
+      pendingImport.filas.forEach((fila) => {
+        vistas.set(claveFilaRetiro(fila), fila);
+      });
+      filas = Array.from(vistas.values());
+    }
+
+    const pendiente = pendingImport;
+    setPendingImport(null);
+    setIsImporting(true);
+    try {
+      await aplicarImportacion(pendiente.vectores, pendiente.externos, pendiente.rut, filas, pendiente.warnings);
+    } catch (error) {
+      console.error('Fallo la importacion del Excel:', error);
+      setRecalcError(
+        'No fue posible importar el archivo Excel. Verifica que contenga las hojas "Vectores" y "Calculadora".'
+      );
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -255,6 +341,10 @@ export const useSimulador = (): UseSimuladorReturn => {
     selectedField,
     isInspectorOpen,
     patrimonioPersonal,
+    retirosConflictOpen: pendingImport !== null,
+    pendingRetirosCount: pendingImport?.filas.length ?? 0,
+    previasRetirosCount: digitados.retiros.filas.length,
+    retirosImportWarnings,
     setRutSeleccionado,
     setAtributo14D1,
     setAtributoCRRP,
@@ -266,6 +356,7 @@ export const useSimulador = (): UseSimuladorReturn => {
     handleRevertir,
     handleDigitadoChange,
     handleRetirosFilasChange,
+    resolveRetirosConflict,
     openInspector,
   };
 };

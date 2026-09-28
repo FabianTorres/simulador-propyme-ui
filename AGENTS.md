@@ -62,14 +62,14 @@ Todo vive en `src/features/simulation/`:
 
 ## Estado del proyecto
 
-### Fase 1 — Página 1 (Ingresos): COMPLETA
+### Fase 1 — Página 1 (Ingresos): COMPLETA y VALIDADA con backend real
 `pages/ingresos/` con `IngresosPage`, `IncomeTable`, `PatrimonioModal`,
 `trazabilidad` y `incomeCatalog`. Reglas de visibilidad y bloqueo implementadas
-según `docs/Pagina_1_14D1.md`.
+según `docs/Pagina_1_14D1.md`. Probada contra FastAPI, funcionando bien.
 
-### Fase 2 — Página 2 (Egresos): IMPLEMENTADA (maqueta)
+### Fase 2 — Página 2 (Egresos): COMPLETA y VALIDADA con backend real
 `pages/egresos/` con `EgresosPage`, `EgresosTable`, `trazabilidad` y
-`egresosCatalog`. Columnas: Compras y Servicios (A), adeudados AT anterior (H),
+`egresosCatalog`. Probada contra FastAPI, funcionando bien. Columnas: Compras y Servicios (A), adeudados AT anterior (H),
 Egresos del año (B), No Pagadas (C), Patrimonio (D), Renta Presunta (E),
 Monto Compras o Egresos Pagados (F).
 
@@ -87,7 +87,7 @@ Reglas UI de Egresos:
 - La fila `8.31` mantiene C, D y E bloqueadas permanentemente.
 - El bloqueo por `Columna B === 0` deshabilita las columnas C/D/E de esa fila.
 - Banner de advertencia `aviso_arriendos_pagados`.
-- Pendiente de esta fase: tooltips de 8.14/8.15/8.17/8.27 y validación contra el backend real.
+- Pendiente menor: tooltips de 8.14/8.15/8.17/8.27.
 
 ### Fase 3 — Página 3 (Retiros): IMPLEMENTADA (maqueta)
 `pages/retiros/` con `RetirosPage`, `RetirosTable`, `trazabilidad`, `types/retiros.ts`
@@ -109,6 +109,7 @@ Reglas clave de Retiros:
 - El nodo `response.retiros` se **preserva intacto** entre ediciones para no perder los
   calculos internos (`calculo`/`derivadas`) que alimentan al RRE.
 - `AuditableTextCellInput` (variante de texto) se usa para RUT y fechas `dd/mm/aaaa`.
+- La hoja Excel opcional `Retiros` (misma subida) siembra `digitados.retiros.filas` via `parseExcelWorkbook`; ante choque con filas manuales se pregunta Reemplazar/Fusionar/Cancelar (`RetirosConflictModal`, fusion por `rut|f1_fecha|f2_fecha`).
 - El `at` del payload es `'2026'` (proximo periodo sera `'2027'`).
 
 Pendiente: validacion final contra el backend real de Retiros.

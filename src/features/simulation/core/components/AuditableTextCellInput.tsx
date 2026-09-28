@@ -48,7 +48,7 @@ export const AuditableTextCellInput = ({
         placeholder={placeholder}
         maxLength={maxLength}
         onChange={(e) => handleChange(e.target.value)}
-        className={`w-full text-center font-mono py-1.5 pl-2 pr-6 border rounded text-xs transition-all ${
+        className={`w-full min-w-0 text-center font-mono py-1.5 pl-2 pr-6 border rounded text-xs transition-all ${
           disabled
             ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed'
             : 'bg-white border-slate-300 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500'

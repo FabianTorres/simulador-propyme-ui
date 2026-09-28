@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { COLUMNAS_RETIROS, GRUPOS_RETIROS } from './data/retirosCatalog';
 import { parseNumero } from '../../../../utils/parsers';
 import { AuditableCellInput } from '../../core/components/AuditableCellInput';
+import { AuditableDateCellInput } from '../../core/components/AuditableDateCellInput';
 import { AuditableTextCellInput } from '../../core/components/AuditableTextCellInput';
 import { crearRetiroFilaVacia } from './types/retiros';
 import type { DigitadosRetiros, RetiroFilaInput, RetirosResponseData } from './types/retiros';
@@ -27,6 +28,15 @@ type CampoNumerico =
   | 'f2_monto'
   | 'f2_isfut_h'
   | 'f2_isfut_a';
+
+/**
+ * Anchos de columna en px (UNICO lugar para ajustar tamanos).
+ * Orden: Fila, A (RUT), B (Usufructuario), C (Acciones), D (F1 fecha),
+ * E/F/G (F1 montos), H (Saldo), I (F2 fecha), J/K/L (F2 montos), Validacion.
+ * Con `table-fixed` + `colgroup` estos valores SI se obedecen (con
+ * `table-layout: auto` el contenido manda y los min-w no encogen).
+ */
+const ANCHOS_COLUMNA = [78, 125, 78, 60, 96, 125, 125, 125, 125, 96, 125, 125, 125, 90];
 
 /**
  * RetirosTable — Grilla dinamica de la Pagina 3 (Retiros).
@@ -96,53 +106,58 @@ export const RetirosTable = ({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-max min-w-full text-left border-collapse table-fixed">
+          <colgroup>
+            {ANCHOS_COLUMNA.map((ancho, i) => (
+              <col key={i} style={{ width: ancho }} />
+            ))}
+          </colgroup>
           {/* Encabezado de 3 niveles: letras, grupos, subtitulos. */}
           <thead>
             <tr className="bg-slate-900 border-b border-slate-800 text-indigo-400 font-mono text-[11px] font-bold uppercase tracking-widest">
-              <th rowSpan={3} className="py-2 px-3 text-center border-r border-slate-800 align-middle text-slate-400">
+              <th rowSpan={3} className="py-2 px-3 text-center border-r border-slate-800 align-middle text-slate-400 ">
                 Fila
               </th>
               {COLUMNAS_RETIROS.map((col) => (
-                <th key={col.letra} className="py-1.5 px-2 text-center border-r border-slate-800">
+                <th key={col.letra} className="py-1.5 px-2 text-center border-r border-slate-800 leading-tight">
                   {col.letra}
                 </th>
               ))}
-              <th rowSpan={3} className="py-2 px-3 text-center border-l border-slate-800 align-middle text-slate-400">
+              <th rowSpan={3} className="py-2 px-3 text-center border-l border-slate-800 align-middle text-slate-400 ">
                 Validación
               </th>
             </tr>
 
             <tr className="bg-slate-950 text-white">
-              <th rowSpan={2} className="py-2 px-2 text-left border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300">
+              <th rowSpan={2} className="py-2 px-2 text-center border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300  leading-tight">
                 Rut socio
               </th>
-              <th rowSpan={2} className="py-2 px-2 text-center border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300">
+              <th rowSpan={2} className="py-2 px-2 text-center border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300  leading-tight">
                 Usufructuario
               </th>
-              <th rowSpan={2} className="py-2 px-2 text-center border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300">
+              <th rowSpan={2} className="py-2 px-2 text-center border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300  leading-tight">
                 Cantidad de Acciones
               </th>
-              <th colSpan={4} className="py-2 px-2 text-center border-r border-slate-800 text-[10px] uppercase tracking-wider text-cyan-300">
+              <th colSpan={4} className="py-2 px-2 text-center border-r border-slate-800 text-[10px] uppercase tracking-wider text-cyan-300 leading-tight">
                 {GRUPOS_RETIROS.retiros}
               </th>
-              <th rowSpan={2} className="py-2 px-2 text-center border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300">
+              <th rowSpan={2} className="py-2 px-2 text-center border-r border-slate-800 text-[10px] uppercase tracking-wider text-slate-300  leading-tight">
                 Saldo monto de retiro en exceso AT-1
               </th>
-              <th colSpan={4} className="py-2 px-2 text-center border-r border-slate-800 text-[10px] uppercase tracking-wider text-cyan-300">
+              <th colSpan={4} className="py-2 px-2 text-center border-r border-slate-800 text-[10px] uppercase tracking-wider text-cyan-300 leading-tight">
                 {GRUPOS_RETIROS.devolucion}
               </th>
             </tr>
 
             <tr className="bg-slate-950 text-white border-t border-slate-800">
-              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300">Fecha Retiro</th>
-              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300">Monto retiro</th>
-              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300">Monto ISFUT_H</th>
-              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300">Monto ISFUT_A</th>
-              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300">Fecha</th>
-              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300">Monto</th>
-              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300">Monto ISFUT_H</th>
-              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300">Monto ISFUT_A</th>
+              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300  leading-tight">Fecha Retiro</th>
+              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300  leading-tight">Monto retiro</th>
+              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300  leading-tight">Monto ISFUT_H</th>
+              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300  leading-tight">Monto ISFUT_A</th>
+              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300  leading-tight">Fecha</th>
+              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300  leading-tight">Monto</th>
+              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300  leading-tight">Monto ISFUT_H</th>
+              <th className="py-2 px-2 text-center border-r border-slate-800 text-[10px] tracking-wider text-slate-300  leading-tight">Monto ISFUT_A</th>
             </tr>
           </thead>
 
@@ -186,7 +201,7 @@ export const RetirosTable = ({
                   </td>
 
                   {/* Col. A — RUT socio */}
-                  <td className="py-2 px-2 border-r border-b border-slate-100">
+                  <td className="py-2 px-2 border-r border-b border-slate-100 ">
                     <AuditableTextCellInput
                       value={fila.rut}
                       placeholder="12345678-9"
@@ -198,7 +213,7 @@ export const RetirosTable = ({
                   </td>
 
                   {/* Col. B — Usufructuario */}
-                  <td className="py-2 px-2 border-r border-b border-slate-100">
+                  <td className="py-2 px-2 border-r border-b border-slate-100 ">
                     <select
                       value={fila.usufructuario ?? ''}
                       title="Ingrese 1 si el Rut corresponde a usufructuario y 2 si corresponde a Nudo propietario."
@@ -214,7 +229,7 @@ export const RetirosTable = ({
                   </td>
 
                   {/* Col. C — Cantidad de Acciones */}
-                  <td className="py-2 px-2 border-r border-b border-slate-100">
+                  <td className="py-2 px-2 border-r border-b border-slate-100 ">
                     <AuditableCellInput
                       value={fila.acciones}
                       traceKey={`retAcciones_${numeroFila}`}
@@ -224,12 +239,9 @@ export const RetirosTable = ({
                   </td>
 
                   {/* Col. D — Fecha Retiro */}
-                  <td className="py-2 px-2 border-r border-b border-slate-100">
-                    <AuditableTextCellInput
+                  <td className="py-2 px-2 border-r border-b border-slate-100 ">
+                    <AuditableDateCellInput
                       value={fila.f1_fecha}
-                      placeholder="dd/mm/aaaa"
-                      variant="fecha"
-                      maxLength={10}
                       traceKey={`retF1Fecha_${numeroFila}`}
                       onChange={(v) => handleFieldChange(index, 'f1_fecha', v)}
                       onOpenInspector={onOpenInspector}
@@ -238,7 +250,7 @@ export const RetirosTable = ({
 
                   {/* Col. E-G — Monto retiro / ISFUT_H / ISFUT_A */}
                   {(['f1_monto', 'f1_isfut_h', 'f1_isfut_a'] as CampoNumerico[]).map((campo) => (
-                    <td key={campo} className="py-2 px-2 border-r border-b border-slate-100">
+                    <td key={campo} className="py-2 px-2 border-r border-b border-slate-100 ">
                       <AuditableCellInput
                         value={fila[campo]}
                         traceKey={`ret_${campo}_${numeroFila}`}
@@ -249,7 +261,7 @@ export const RetirosTable = ({
                   ))}
 
                   {/* Col. H — Saldo */}
-                  <td className="py-2 px-2 border-r border-b border-slate-100">
+                  <td className="py-2 px-2 border-r border-b border-slate-100 ">
                     <AuditableCellInput
                       value={fila.saldo}
                       traceKey={`retSaldo_${numeroFila}`}
@@ -259,12 +271,9 @@ export const RetirosTable = ({
                   </td>
 
                   {/* Col. I — Fecha devolucion */}
-                  <td className="py-2 px-2 border-r border-b border-slate-100">
-                    <AuditableTextCellInput
+                  <td className="py-2 px-2 border-r border-b border-slate-100 ">
+                    <AuditableDateCellInput
                       value={fila.f2_fecha}
-                      placeholder="dd/mm/aaaa"
-                      variant="fecha"
-                      maxLength={10}
                       traceKey={`retF2Fecha_${numeroFila}`}
                       onChange={(v) => handleFieldChange(index, 'f2_fecha', v)}
                       onOpenInspector={onOpenInspector}
@@ -273,7 +282,7 @@ export const RetirosTable = ({
 
                   {/* Col. J-L — Monto / ISFUT_H / ISFUT_A */}
                   {(['f2_monto', 'f2_isfut_h', 'f2_isfut_a'] as CampoNumerico[]).map((campo) => (
-                    <td key={campo} className="py-2 px-2 border-r border-b border-slate-100">
+                    <td key={campo} className="py-2 px-2 border-r border-b border-slate-100 ">
                       <AuditableCellInput
                         value={fila[campo]}
                         traceKey={`ret_${campo}_${numeroFila}`}
@@ -284,7 +293,7 @@ export const RetirosTable = ({
                   ))}
 
                   {/* Validacion por fila (flags del backend) */}
-                  <td className="py-2 px-2 border-b border-slate-100 text-center">
+                  <td className="py-2 px-2 border-b border-slate-100 text-center ">
                     <div className="flex items-center justify-center gap-1">
                       <button
                         type="button"
